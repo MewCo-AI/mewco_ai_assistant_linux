@@ -8,22 +8,21 @@ print("正在加载语音识别模块...")
 import sherpa_onnx
 import numpy as np
 import soundfile as sf
-from web_settings import speech_end_wait_time, mic_num, myvoice_path, voiceprint_switch, voiceprint_threshold, \
-    sound_sense_switch, sound_sense_threshold
+import sys_init as cfg
 
-asr_model_path = "data/model/ASR/sherpa-onnx-sense-voice-zh-en-ja-ko-yue"
-vp_model_path = "data/model/SpeakerID/3dspeaker_speech_campplus_sv_zh_en_16k-common_advanced.onnx"
-audio_tag_model_path = "data/model/AudioTag/sherpa-onnx-zipformer-small-audio-tagging"
+asr_model_path = f"{cfg.model_root_path}/ASR/sherpa-onnx-sense-voice-zh-en-ja-ko-yue"
+vp_model_path = f"{cfg.model_root_path}/SpeakerID/3dspeaker_speech_campplus_sv_zh_en_16k-common_advanced.onnx"
+audio_tag_model_path = f"{cfg.model_root_path}/AudioTag/sherpa-onnx-zipformer-small-audio-tagging"
 vp_config, extractor, audio1, sample_rate1, embedding1, audio_tagger = None, None, None, None, None, None
 warnings.filterwarnings("ignore", category=RuntimeWarning)
 FORMAT = pyaudio.paInt16
 CHANNELS, RATE, CHUNK = 1, 16000, 1024
-SILENCE_DURATION = speech_end_wait_time  # 静音持续时间，单位秒
+SILENCE_DURATION = cfg.speech_end_wait_time  # 静音持续时间，单位秒
 SILENCE_CHUNKS = SILENCE_DURATION * RATE / CHUNK  # 静音持续的帧数
 p = pyaudio.PyAudio()
 try:
     stream = p.open(format=FORMAT, channels=CHANNELS, rate=RATE, input=True, frames_per_buffer=CHUNK,
-                    input_device_index=mic_num)
+                    input_device_index=cfg.mic_num)
     print("麦克风开启成功！")
 except Exception as e:
     print(f"麦克风配置错误，错误详情：{e}")
@@ -81,7 +80,7 @@ def detect_audio_event(audio_path):  # 检测音频中的事件
         results = audio_tagger.compute(audio_stream)
         if results and len(results) > 0:
             top_event = results[0]
-            if top_event.prob > sound_sense_threshold:
+            if top_event.prob > cfg.sound_sense_threshold:
                 for key, value in audio_event_mapping.items():
                     if key in top_event.name:
                         return value
@@ -99,7 +98,7 @@ def dbfs(rms_value):  # 将均方根转换为分贝满量程（dBFS）
     return 20 * np.log10(rms_value / (2 ** 15))  # 16位音频
 
 
-# open_source_project_address:https://github.com/MewCo-AI/ai_virtual_mate_linux
+# open_source_project_address:https://github.com/MewCo-AI/mewco_ai_assistant_linux
 def record_audio():  # 录音
     frames = []
     recording = True
@@ -109,6 +108,7 @@ def record_audio():  # 录音
         frames.append(data)
         current_rms = rms(data)
         current_dbfs = dbfs(current_rms)
+        #print(current_dbfs)
         if str(current_dbfs) != "nan":
             silence_counter += 1  # 增加静音计数
             if silence_counter > SILENCE_CHUNKS:  # 判断是否达到设定的静音持续时间
@@ -120,7 +120,7 @@ def record_audio():  # 录音
 
 def verify_speakers():
     global vp_config, extractor, audio1, sample_rate1, embedding1
-    audio_file1 = myvoice_path
+    audio_file1 = cfg.myvoice_path
     audio_file2 = cache_path
 
     def load_audio(filename):
@@ -151,11 +151,11 @@ def verify_speakers():
         audio2, sample_rate2 = load_audio(audio_file2)
         embedding2 = extract_speaker_embedding(audio2, sample_rate2)
         similarity = cosine_similarity()
-        if similarity >= voiceprint_threshold:
-            print(f"✓ 结果: 是同一个说话人 (相似度 {similarity:.4f} >= 阈值 {voiceprint_threshold})")
+        if similarity >= cfg.voiceprint_threshold:
+            print(f"✓ 结果: 是同一个说话人 (相似度 {similarity:.4f} >= 阈值 {cfg.voiceprint_threshold})")
             return True
         else:
-            print(f"✗ 结果: 不是同一个说话人 (相似度 {similarity:.4f} < 阈值 {voiceprint_threshold})")
+            print(f"✗ 结果: 不是同一个说话人 (相似度 {similarity:.4f} < 阈值 {cfg.voiceprint_threshold})")
             return False
     except Exception as e1:
         print(f"声纹识别出错，详情：{e1}")
@@ -172,11 +172,11 @@ def recognize_audio(audiodata):  # 保存录音到临时文件
         n_frames = wf.getnframes()
         duration = n_frames / RATE
     sound_tag = ""
-    if sound_sense_switch == "on":
+    if cfg.sound_sense_switch == "on":
         sound_tag = detect_audio_event(cache_path)
     if duration < SILENCE_DURATION + 0.5:
         return sound_tag
-    if voiceprint_switch == "on":
+    if cfg.voiceprint_switch == "on":
         if not verify_speakers():
             return ""
     audio, sample_rate = sf.read(cache_path, dtype="float32", always_2d=True)
@@ -194,6 +194,6 @@ def recognize_audio(audiodata):  # 保存录音到临时文件
     emotion = emotion_dict.get(emotion_key, "")
     event = event_dict.get(event_key, '')
     result = sound_tag + event + text + emotion
-    if result == "The.":
+    if result == "The." or result == "Yeah.":
         return ""
     return result
