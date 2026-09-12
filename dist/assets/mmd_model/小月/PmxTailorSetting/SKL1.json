@@ -1,0 +1,26 @@
+{
+    "material_name": "03_Bottoms",
+    "abb_name": "SKL1",
+    "parent_bone_name": "左足",
+    "group": "8",
+    "direction": "下",
+    "primitive": "単一揺れ物",
+    "exist_physics_clear": "再利用",
+    "target_bones": [
+        [
+            "装飾_05-01_Sec_L_SkirtBack_01",
+            "装飾_05-02_Sec_L_SkirtBack_end_01"
+        ],
+        [
+            "装飾_07-01_Sec_L_SkirtSide_01",
+            "装飾_07-02_Sec_L_SkirtSide_end_01"
+        ],
+        [
+            "装飾_06-01_Sec_L_SkirtFront_01",
+            "装飾_06-02_Sec_L_SkirtFront_end_01"
+        ]
+    ],
+    "back_extend_material_names": [],
+    "rigidbody_root_thick": 0.35,
+    "rigidbody_end_thick": 0.5
+}
