@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="assets/image/logo.png"/>
+    <title>主机状态 - 枫云AI助手Linux版</title>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box;}
+        body{background:#1e2a3a;color:#eef2f5;font-family:'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif;margin:0;padding:0;}
+        .navbar{background:#0f1720;padding:0 24px;height:56px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 1px 3px rgba(0,0,0,0.3);position:sticky;top:0;z-index:100;}
+        .logo-area{display:flex;align-items:center;gap:10px;}
+        .logo-area img{width:28px;height:28px;}
+        .logo-area h1{font-size:18px;font-weight:500;margin:0;}
+        .menu-btn{background:#2c3e4e;border:none;color:white;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:14px;transition:all 0.2s;}
+        .menu-btn:hover{background:#3e5a6c;}
+        .dropdown{position:relative;display:inline-block;}
+        .dropdown-content{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);z-index:999;justify-content:center;align-items:center;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);}
+        .dropdown-content.show{display:flex;}
+        .ios-grid{background:rgba(30,42,58,0.95);border-radius:32px;padding:30px 30px 40px;max-width:560px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.6);border:1px solid rgba(255,255,255,0.08);position:relative;max-height:90vh;overflow-y:auto;}
+        .ios-grid .close-btn{position:absolute;top:12px;right:16px;background:none;border:none;color:#8aaec0;font-size:24px;cursor:pointer;padding:4px 8px;border-radius:50%;transition:background 0.2s;}
+        .ios-grid .close-btn:hover{background:rgba(255,255,255,0.1);}
+        .ios-grid .grid-title{text-align:center;font-size:16px;font-weight:500;color:#b8d4e8;margin-bottom:24px;letter-spacing:1px;}
+        .ios-grid .app-grid{display:grid;grid-template-columns:repeat(4, 1fr);gap:16px 8px;}
+        .ios-grid .app-item{display:flex;flex-direction:column;align-items:center;padding:10px 4px 8px;border-radius:16px;cursor:pointer;transition:all 0.15s;background:transparent;border:none;color:#eef2f5;width:100%;}
+        .ios-grid .app-item:hover{background:rgba(255,255,255,0.06);transform:scale(1.02);}
+        .ios-grid .app-item:active{transform:scale(0.92);}
+        .ios-grid .app-item .app-icon{width:58px;height:58px;border-radius:14px;background:rgba(44,62,78,0.6);display:flex;align-items:center;justify-content:center;margin-bottom:6px;box-shadow:0 2px 8px rgba(0,0,0,0.2);overflow:hidden;flex-shrink:0;}
+        .ios-grid .app-item .app-icon img{width:58px;height:58px;object-fit:cover;border-radius:14px;}
+        .ios-grid .app-item .app-icon .icon-placeholder{font-size:28px;opacity:0.8;}
+        .ios-grid .app-item .app-name{font-size:11px;color:#b8d4e8;text-align:center;line-height:1.3;max-width:64px;word-break:break-all;}
+        .container{max-width:1400px;margin:0 auto;padding:20px;}
+        .card{background:#1a2a36;border-radius:12px;margin-bottom:20px;box-shadow:0 2px 8px rgba(0,0,0,0.2);overflow:hidden;}
+        .card-header{padding:14px 20px;border-bottom:1px solid #2c4050;font-weight:600;font-size:16px;background:#1f2f3c;display:flex;align-items:center;gap:8px;}
+        .card-body{padding:18px 20px;}
+        .metrics-grid{display:grid;grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));gap:16px;}
+        .metric-item{background:#0f1a22;border-radius:10px;padding:14px;text-align:center;transition:transform 0.1s;}
+        .metric-label{font-size:13px;color:#8aaec0;margin-bottom:8px;}
+        .metric-value{font-size:28px;font-weight:700;color:#64b5f6;}
+        .metric-unit{font-size:14px;color:#8aaec0;font-weight:normal;}
+        .metric-sub{font-size:12px;color:#6c8ea0;margin-top:6px;}
+        .chart-container{margin-top:20px;}
+        .chart-title{font-size:14px;font-weight:500;margin-bottom:12px;color:#b8d4e8;}
+        .chart-canvas-wrapper{background:#0f1a22;border-radius:8px;padding:12px;margin-bottom:20px;}
+        canvas{width:100%;height:auto;background:#0f1a22;border-radius:6px;}
+        .two-columns{display:grid;grid-template-columns:repeat(3, 1fr);gap:20px;}
+        .full-width{grid-column:span 3;}
+        button{background:#2c5a7a;border:none;color:white;padding:8px 16px;border-radius:24px;cursor:pointer;font-size:14px;transition:background 0.2s;}
+        button:hover{background:#3e7a9e;}
+        .process-list-item{display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid #1a2a36;font-size:13px;}
+        .process-list-item .name{color:#b8d4e8;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:120px;}
+        .process-list-item .value{font-weight:500;}
+        .process-list-item .value.cpu{color:#64b5f6;}
+        .process-list-item .value.mem{color:#81c784;}
+        .process-list-item .value.io{color:#ffb74d;}
+        .top-section-title{font-weight:bold;margin-bottom:8px;font-size:14px;}
+        .top-section-title.cpu{color:#64b5f6;}
+        .top-section-title.mem{color:#81c784;}
+        .top-section-title.io{color:#ffb74d;}
+        .top-grid{display:grid;grid-template-columns:repeat(3, 1fr);gap:16px;}
+        .top-box{background:#0f1a22;border-radius:10px;padding:12px;min-height:140px;}
+        .top-process-grid{display:grid;grid-template-columns:repeat(4, minmax(160px, 1fr));gap:16px;overflow-x:auto;padding-bottom:8px;-webkit-overflow-scrolling:touch;scroll-snap-type:x proximity;}
+        .top-process-grid > *{scroll-snap-align:start;min-width:0;}
+        .top-process-grid::-webkit-scrollbar{height:4px;}
+        .top-process-grid::-webkit-scrollbar-track{background:#1a2a36;border-radius:4px;}
+        .top-process-grid::-webkit-scrollbar-thumb{background:#3a5a6e;border-radius:4px;}
+        @media (max-width:1200px){
+            .two-columns{grid-template-columns:repeat(2, 1fr);}
+            .full-width{grid-column:span 2;}
+            .ios-grid .app-grid{grid-template-columns:repeat(4, 1fr);}
+        }
+        @media (max-width:900px){
+            .two-columns{grid-template-columns:1fr;}
+            .full-width{grid-column:span 1;}
+            .container{padding:12px;}
+            .metric-value{font-size:22px;}
+            .ios-grid{padding:20px 16px 30px;}
+            .ios-grid .app-grid{grid-template-columns:repeat(4, 1fr);gap:10px 4px;}
+            .ios-grid .app-item .app-icon{width:48px;height:48px;}
+            .ios-grid .app-item .app-icon img{width:48px;height:48px;}
+            .top-process-grid{grid-template-columns:repeat(4, minmax(140px, 1fr));gap:12px;}
+        }
+        @media (max-width:480px){
+            .ios-grid .app-grid{grid-template-columns:repeat(3, 1fr);}
+            .top-process-grid{grid-template-columns:repeat(4, minmax(130px, 1fr));gap:10px;}
+        }
+        ::-webkit-scrollbar{width:6px;height:6px;}
+        ::-webkit-scrollbar-track{background:#1a2a36;}
+        ::-webkit-scrollbar-thumb{background:#3a5a6e;border-radius:4px;}
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <div class="logo-area">
+            <img src="assets/image/logo.png" alt="Logo">
+            <h1>枫云AI助手Linux版</h1>
+        </div>
+        <div class="dropdown">
+            <button class="menu-btn" id="dropdown-btn">📋 功能菜单</button>
+            <div id="dropdown-content" class="dropdown-content">
+                <div class="ios-grid">
+                    <button class="close-btn" id="close-dropdown">✕</button>
+                    <div class="grid-title">全部应用</div>
+                    <div class="app-grid" id="app-grid-container">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="container">
+        <div class="card">
+            <div class="card-header">
+                <span>📊 硬件资源监控</span>
+            </div>
+            <div class="card-body">
+                <div class="metrics-grid">
+                    <div class="metric-item">
+                        <div class="metric-label">🔲 CPU 使用率</div>
+                        <div class="metric-value"><span id="cpu_percent">0</span><span class="metric-unit">%</span></div>
+                        <div class="metric-sub">负载: <span id="load_avg">0.00</span> (1m)</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-label">💾 内存 使用率</div>
+                        <div class="metric-value"><span id="memory_percent">0</span><span class="metric-unit">%</span></div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-label">💽 磁盘 I/O</div>
+                        <div class="metric-value" style="font-size: 16px;">
+                            <span style="color:#4fc3f7;">⬇️ <span id="disk_read_speed">0</span></span>
+                            <span style="color:#ffb74d;">⬆️ <span id="disk_write_speed">0</span></span>
+                            <span class="metric-unit">KB/s</span>
+                        </div>
+                        <div class="metric-sub">读取 / 写入</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-label">🌡️ 主机温度</div>
+                        <div class="metric-value"><span id="temp">0</span><span class="metric-unit">°C</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-header">
+                <span>🌐 网络与系统概况</span>
+            </div>
+            <div class="card-body">
+                <div class="metrics-grid">
+                    <div class="metric-item">
+                        <div class="metric-label">🌍 外部网络</div>
+                        <div class="metric-value" style="font-size: 18px;" id="wan_info">-</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-label">🏠 内部网络</div>
+                        <div class="metric-value" style="font-size: 18px;" id="lan_info">-</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-label">🌐 网络吞吐量</div>
+                        <div class="metric-value" style="font-size: 18px;"><span id="net_throughput">0</span><span class="metric-unit">KB/s</span></div>
+                        <div class="metric-sub">⬇️下载 / ⬆️上传</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-label">⏱️ 运行时间</div>
+                        <div class="metric-value" style="font-size: 20px;"><span id="uptime">0</span></div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-label">🔢 进程总数</div>
+                        <div class="metric-value"><span id="process_count">0</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-header">
+                <span>📈 历史趋势</span>
+            </div>
+            <div class="card-body">
+                <div class="two-columns">
+                    <div class="chart-canvas-wrapper">
+                        <div class="chart-title">CPU 使用率 (%)</div>
+                        <canvas id="cpuChart" width="500" height="180" style="width:100%; height:180px"></canvas>
+                    </div>
+                    <div class="chart-canvas-wrapper">
+                        <div class="chart-title">内存 使用率 (%)</div>
+                        <canvas id="memoryChart" width="500" height="180" style="width:100%; height:180px"></canvas>
+                    </div>
+                    <div class="chart-canvas-wrapper">
+                        <div class="chart-title">主机温度 (°C)</div>
+                        <canvas id="tempChart" width="500" height="180" style="width:100%; height:180px"></canvas>
+                    </div>
+                    <div class="chart-canvas-wrapper">
+                        <div class="chart-title">磁盘 I/O (KB/s) 读取/写入</div>
+                        <canvas id="diskChart" width="500" height="180" style="width:100%; height:180px"></canvas>
+                    </div>
+                    <div class="chart-canvas-wrapper">
+                        <div class="chart-title">网络带宽 (KB/s) 上传/下载</div>
+                        <canvas id="netChart" width="500" height="180" style="width:100%; height:180px"></canvas>
+                    </div>
+                    <div class="chart-canvas-wrapper">
+                        <div class="chart-title">系统负载 (Load Average)</div>
+                        <canvas id="loadChart" width="500" height="180" style="width:100%; height:180px"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-header">
+                <span>📊 Top 5 进程监控</span>
+            </div>
+            <div class="card-body">
+                <div class="top-process-grid">
+                    <div style="background:#0f1a22; border-radius:10px; padding:12px;">
+                        <div style="color:#64b5f6; font-weight:bold; margin-bottom:8px;">🔲 CPU 占用</div>
+                        <div id="cpu_top_list" style="font-size:13px; line-height:1.8;"></div>
+                    </div>
+                    <div style="background:#0f1a22; border-radius:10px; padding:12px;">
+                        <div style="color:#81c784; font-weight:bold; margin-bottom:8px;">💾 内存占用</div>
+                        <div id="mem_top_list" style="font-size:13px; line-height:1.8;"></div>
+                    </div>
+                    <div style="background:#0f1a22; border-radius:10px; padding:12px;">
+                        <div style="color:#4fc3f7; font-weight:bold; margin-bottom:8px;">⬇️ 磁盘读取榜</div>
+                        <div id="disk_read_top_list" style="font-size:13px; line-height:1.8;"></div>
+                    </div>
+                    <div style="background:#0f1a22; border-radius:10px; padding:12px;">
+                        <div style="color:#ffb74d; font-weight:bold; margin-bottom:8px;">⬆️ 磁盘写入榜</div>
+                        <div id="disk_write_top_list" style="font-size:13px; line-height:1.8;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        const appItems = [
+            { url: 'chat', name: 'AI聊天', emoji: '💬' },
+            { url: 'live2d', name: 'Live2D角色', emoji: '👤' },
+            { url: 'mmd', name: 'MMD 3D角色', emoji: '👤' },
+            { url: 'vmd', name: 'MMD 3D动作', emoji: '💃' },
+            { url: 'vrm', name: 'VRM 3D角色', emoji: '👤' },
+            { url: 'link', name: '跨端互联', emoji: '🔗' },
+            { url: 'focus_mode', name: '专注模式', emoji: '⏱' },
+            { url: 'relax_mode', name: '放松模式', emoji: '🌙' },
+            { url: 'settings', name: '软件设置', emoji: '⚙️' },
+            { url: 'logout', name: '退出登录', emoji: '🚪' }
+        ];
+        function renderAppGrid() {
+            const container = document.getElementById('app-grid-container');
+            if (!container) return;
+            container.innerHTML = appItems.map(item => {
+                const iconPath = `data/image/icon/${item.url || 'index'}.png`;
+                return `
+                    <button class="app-item" data-url="${item.url || ''}">
+                        <div class="app-icon">
+                            <img src="${iconPath}"
+                                 alt="${item.name}"
+                                 onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+                            <span class="icon-placeholder" style="display:none;">${item.emoji}</span>
+                        </div>
+                        <span class="app-name">${item.name}</span>
+                    </button>
+                `;
+            }).join('');
+            container.querySelectorAll('.app-item').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    const url = this.dataset.url;
+                    if (url === 'logout') {
+                        window.location.href = '/logout';
+                    } else {
+                        const targetUrl = url ? `/${url}` : '/';
+                        window.open(targetUrl);
+                    }
+                    document.getElementById('dropdown-content').classList.remove('show');
+                });
+            });
+        }
+        let cpuChart, memoryChart, tempChart, netChart, loadChart, diskChart;
+        function initChart(canvasId, label, color, options = {}) {
+            const canvas = document.getElementById(canvasId);
+            if (!canvas) return null;
+            const ctx = canvas.getContext('2d');
+            const width = canvas.clientWidth;
+            const height = canvas.clientHeight;
+            canvas.width = width;
+            canvas.height = height;
+            return {
+                ctx: ctx,
+                width: width,
+                height: height,
+                color: color,
+                label: label,
+                isMulti: options.isMulti || false,
+                fixedMin: options.fixedMin !== undefined ? options.fixedMin : undefined,
+                fixedMax: options.fixedMax !== undefined ? options.fixedMax : undefined,
+                draw: function(dataPoints, secondDataPoints = null) {
+                    if (!this.ctx) return;
+                    const w = this.width;
+                    const h = this.height;
+                    const ctx = this.ctx;
+                    ctx.clearRect(0, 0, w, h);
+                    let allValues = [];
+                    if (this.isMulti && secondDataPoints && Array.isArray(secondDataPoints)) {
+                        allValues = [...dataPoints, ...secondDataPoints];
+                    } else {
+                        allValues = dataPoints;
+                    }
+                    if (!allValues.length || allValues.every(v => v === undefined)) {
+                        ctx.fillStyle = '#6c8ea0';
+                        ctx.font = '12px sans-serif';
+                        ctx.fillText('等待数据...', w/2-40, h/2);
+                        return;
+                    }
+                    let maxVal, minVal;
+                    if (this.fixedMin !== undefined && this.fixedMax !== undefined) {
+                        minVal = this.fixedMin;
+                        maxVal = this.fixedMax;
+                    } else {
+                        maxVal = Math.max(...allValues, 1);
+                        minVal = Math.min(...allValues, 0);
+                        if (maxVal === minVal) maxVal = minVal + 1;
+                    }
+                    const padding = { left: 40, right: 20, top: 15, bottom: 25 };
+                    const graphW = w - padding.left - padding.right;
+                    const graphH = h - padding.top - padding.bottom;
+                    ctx.strokeStyle = '#2c4050';
+                    ctx.lineWidth = 0.5;
+                    for (let i = 0; i <= 4; i++) {
+                        const y = padding.top + (graphH / 4) * i;
+                        ctx.beginPath();
+                        ctx.moveTo(padding.left, y);
+                        ctx.lineTo(w - padding.right, y);
+                        ctx.stroke();
+                    }
+                    ctx.fillStyle = '#8aaec0';
+                    ctx.font = '10px sans-serif';
+                    for (let i = 0; i <= 4; i++) {
+                        const val = maxVal - (i / 4) * (maxVal - minVal);
+                        const y = padding.top + (graphH / 4) * i;
+                        ctx.fillText(val.toFixed(1), 5, y + 3);
+                    }
+                    function drawSingleLine(dataArr, lineColor, isFill = true) {
+                        if (!dataArr.length) return;
+                        const step = graphW / (dataArr.length - 1);
+                        ctx.beginPath();
+                        ctx.strokeStyle = lineColor;
+                        ctx.lineWidth = 1.8;
+                        let firstX = padding.left;
+                        let firstY = padding.top + graphH - ((dataArr[0] - minVal) / (maxVal - minVal)) * graphH;
+                        ctx.moveTo(firstX, firstY);
+                        for (let i = 1; i < dataArr.length; i++) {
+                            const x = padding.left + i * step;
+                            const y = padding.top + graphH - ((dataArr[i] - minVal) / (maxVal - minVal)) * graphH;
+                            ctx.lineTo(x, y);
+                        }
+                        ctx.stroke();
+                        if (isFill) {
+                            ctx.lineTo(padding.left + (dataArr.length - 1) * step, h - padding.bottom);
+                            ctx.lineTo(firstX, h - padding.bottom);
+                            ctx.fillStyle = lineColor + '20';
+                            ctx.fill();
+                        }
+                    }
+                    if (this.isMulti && secondDataPoints && secondDataPoints.length) {
+                        drawSingleLine(dataPoints, this.color, false);
+                        drawSingleLine(secondDataPoints, '#ffb74d', false);
+                        ctx.fillStyle = this.color;
+                        ctx.font = '9px sans-serif';
+                        ctx.fillText('上传', w - 70, h - 18);
+                        ctx.fillStyle = '#ffb74d';
+                        ctx.fillText('下载', w - 70, h - 8);
+                    } else {
+                        drawSingleLine(dataPoints, this.color, true);
+                    }
+                    ctx.fillStyle = '#8aaec0';
+                    ctx.font = '9px sans-serif';
+                    ctx.fillText('最新', w - padding.right - 25, h - 8);
+                    ctx.fillText('最旧', padding.left, h - 8);
+                }
+            };
+        }
+        function drawLoadChart(chartObj, loadData) {
+            if (!chartObj || !chartObj.ctx) return;
+            const ctx = chartObj.ctx;
+            const w = chartObj.width;
+            const h = chartObj.height;
+            ctx.clearRect(0, 0, w, h);
+            if (!loadData || !loadData.load1 || !loadData.load1.length) {
+                ctx.fillStyle = '#6c8ea0';
+                ctx.font = '12px sans-serif';
+                ctx.fillText('等待数据...', w/2-40, h/2);
+                return;
+            }
+            const load1 = loadData.load1;
+            const load5 = loadData.load5;
+            const load15 = loadData.load15;
+            let allVals = [...load1, ...load5, ...load15];
+            let maxVal = Math.max(...allVals, 1);
+            let minVal = Math.min(...allVals, 0);
+            if (maxVal === minVal) maxVal = minVal + 1;
+            const padding = { left: 40, right: 20, top: 15, bottom: 25 };
+            const graphW = w - padding.left - padding.right;
+            const graphH = h - padding.top - padding.bottom;
+            ctx.strokeStyle = '#2c4050';
+            ctx.lineWidth = 0.5;
+            for (let i=0;i<=4;i++) {
+                const y = padding.top + (graphH/4)*i;
+                ctx.beginPath();
+                ctx.moveTo(padding.left, y);
+                ctx.lineTo(w-padding.right, y);
+                ctx.stroke();
+            }
+            ctx.fillStyle = '#8aaec0';
+            ctx.font = '10px sans-serif';
+            for (let i=0;i<=4;i++) {
+                let val = maxVal - (i/4)*(maxVal-minVal);
+                ctx.fillText(val.toFixed(1), 5, padding.top+(graphH/4)*i+3);
+            }
+            function drawLine(dataArr, color) {
+                if (!dataArr.length) return;
+                const step = graphW / (dataArr.length - 1);
+                ctx.beginPath();
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 1.6;
+                for (let i=0;i<dataArr.length;i++) {
+                    let x = padding.left + i*step;
+                    let y = padding.top + graphH - ((dataArr[i]-minVal)/(maxVal-minVal))*graphH;
+                    if(i===0) ctx.moveTo(x,y);
+                    else ctx.lineTo(x,y);
+                }
+                ctx.stroke();
+            }
+            drawLine(load1, '#64b5f6');
+            drawLine(load5, '#81c784');
+            drawLine(load15, '#ffb74d');
+            ctx.fillStyle = '#b8d4e8';
+            ctx.font = '9px sans-serif';
+            ctx.fillText('1分钟', w-70, h-18);
+            ctx.fillStyle = '#81c784';
+            ctx.fillText('5分钟', w-70, h-8);
+            ctx.fillStyle = '#ffb74d';
+            ctx.fillText('15分钟', w-125, h-8);
+        }
+        function drawDiskChart(chartObj, readData, writeData) {
+            if (!chartObj || !chartObj.ctx) return;
+            const ctx = chartObj.ctx;
+            const w = chartObj.width;
+            const h = chartObj.height;
+            ctx.clearRect(0, 0, w, h);
+            if (!readData || !readData.length) {
+                ctx.fillStyle = '#6c8ea0';
+                ctx.font = '12px sans-serif';
+                ctx.fillText('等待数据...', w/2-40, h/2);
+                return;
+            }
+            let allVals = [...readData, ...writeData];
+            let maxVal = Math.max(...allVals, 1);
+            let minVal = Math.min(...allVals, 0);
+            if (maxVal === minVal) maxVal = minVal + 1;
+            const padding = { left: 40, right: 20, top: 15, bottom: 25 };
+            const graphW = w - padding.left - padding.right;
+            const graphH = h - padding.top - padding.bottom;
+            ctx.strokeStyle = '#2c4050';
+            ctx.lineWidth = 0.5;
+            for (let i=0;i<=4;i++) {
+                const y = padding.top + (graphH/4)*i;
+                ctx.beginPath();
+                ctx.moveTo(padding.left, y);
+                ctx.lineTo(w-padding.right, y);
+                ctx.stroke();
+            }
+            ctx.fillStyle = '#8aaec0';
+            ctx.font = '10px sans-serif';
+            for (let i=0;i<=4;i++) {
+                let val = maxVal - (i/4)*(maxVal-minVal);
+                ctx.fillText(val.toFixed(1), 5, padding.top+(graphH/4)*i+3);
+            }
+            function drawLine(dataArr, color) {
+                if (!dataArr.length) return;
+                const step = graphW / (dataArr.length - 1);
+                ctx.beginPath();
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 1.6;
+                for (let i=0;i<dataArr.length;i++) {
+                    let x = padding.left + i*step;
+                    let y = padding.top + graphH - ((dataArr[i]-minVal)/(maxVal-minVal))*graphH;
+                    if(i===0) ctx.moveTo(x,y);
+                    else ctx.lineTo(x,y);
+                }
+                ctx.stroke();
+            }
+            drawLine(readData, '#4fc3f7');
+            drawLine(writeData, '#ffb74d');
+            ctx.fillStyle = '#4fc3f7';
+            ctx.font = '9px sans-serif';
+            ctx.fillText('读取', w-70, h-18);
+            ctx.fillStyle = '#ffb74d';
+            ctx.fillText('写入', w-70, h-8);
+        }
+        function updateAllCharts(data) {
+            if (cpuChart && data.cpu_history) cpuChart.draw(data.cpu_history);
+            if (memoryChart && data.memory_history) memoryChart.draw(data.memory_history);
+            if (tempChart && data.temp_history) tempChart.draw(data.temp_history);
+            if (netChart && data.net_up_history && data.net_down_history) {
+                netChart.draw(data.net_up_history, data.net_down_history);
+            }
+            if (diskChart && data.disk_read_history && data.disk_write_history) {
+                drawDiskChart(diskChart, data.disk_read_history, data.disk_write_history);
+            }
+            if (loadChart && data.load_history) {
+                drawLoadChart(loadChart, data.load_history);
+            }
+            if (data.top_processes) {
+                updateTopProcesses(data.top_processes);
+            }
+        }
+        function updateTopProcesses(topData) {
+            const cpuList = document.getElementById('cpu_top_list');
+            if (cpuList && topData.cpu_top) {
+                if (topData.cpu_top.length === 0) {
+                    cpuList.innerHTML = '<div style="color:#6c8ea0; font-size:13px; padding:4px 0;">无活跃进程</div>';
+                } else {
+                    cpuList.innerHTML = topData.cpu_top.map(p =>
+                        `<div style="display:flex; justify-content:space-between; padding:3px 0; border-bottom:1px solid #1a2a36; font-size:13px;">
+                            <span style="color:#b8d4e8; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:120px;" title="${p.name}">${p.name}</span>
+                            <span style="color:#64b5f6; font-weight:500;">${p.cpu}%</span>
+                        </div>`
+                    ).join('');
+                }
+            }
+            const memList = document.getElementById('mem_top_list');
+            if (memList && topData.mem_top) {
+                if (topData.mem_top.length === 0) {
+                    memList.innerHTML = '<div style="color:#6c8ea0; font-size:13px; padding:4px 0;">无活跃进程</div>';
+                } else {
+                    memList.innerHTML = topData.mem_top.map(p =>
+                        `<div style="display:flex; justify-content:space-between; padding:3px 0; border-bottom:1px solid #1a2a36; font-size:13px;">
+                            <span style="color:#b8d4e8; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:120px;" title="${p.name}">${p.name}</span>
+                            <span style="color:#81c784; font-weight:500;">${p.memory}%</span>
+                        </div>`
+                    ).join('');
+                }
+            }
+            const diskReadList = document.getElementById('disk_read_top_list');
+            if (diskReadList && topData.disk_read_top) {
+                if (topData.disk_read_top.length === 0) {
+                    diskReadList.innerHTML = '<div style="color:#6c8ea0; font-size:13px; padding:4px 0;">无读取活动</div>';
+                } else {
+                    diskReadList.innerHTML = topData.disk_read_top.map(p => {
+                        const readMB = (p.io_read / (1024 * 1024)).toFixed(1);
+                        return `<div style="display:flex; justify-content:space-between; padding:3px 0; border-bottom:1px solid #1a2a36; font-size:13px;">
+                            <span style="color:#b8d4e8; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:120px;" title="${p.name}">${p.name}</span>
+                            <span style="color:#4fc3f7; font-weight:500;">${readMB} MB</span>
+                        </div>`;
+                    }).join('');
+                }
+            }
+            const diskWriteList = document.getElementById('disk_write_top_list');
+            if (diskWriteList && topData.disk_write_top) {
+                if (topData.disk_write_top.length === 0) {
+                    diskWriteList.innerHTML = '<div style="color:#6c8ea0; font-size:13px; padding:4px 0;">无写入活动</div>';
+                } else {
+                    diskWriteList.innerHTML = topData.disk_write_top.map(p => {
+                        const writeMB = (p.io_write / (1024 * 1024)).toFixed(1);
+                        return `<div style="display:flex; justify-content:space-between; padding:3px 0; border-bottom:1px solid #1a2a36; font-size:13px;">
+                            <span style="color:#b8d4e8; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:120px;" title="${p.name}">${p.name}</span>
+                            <span style="color:#ffb74d; font-weight:500;">${writeMB} MB</span>
+                        </div>`;
+                    }).join('');
+                }
+            }
+        }
+        function formatNetSpeed(bytesPerSec) {
+            if (bytesPerSec === undefined) return "0";
+            let kb = bytesPerSec / 1024;
+            if (kb >= 1024) return (kb/1024).toFixed(1) + " MB/s";
+            return kb.toFixed(1) + " KB/s";
+        }
+        function updateInfo() {
+            fetch('/api/info')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('cpu_percent').textContent = data.cpu_percent;
+                    document.getElementById('memory_percent').textContent = data.memory_percent;
+                    document.getElementById('temp').textContent = data.temp;
+                    document.getElementById('process_count').textContent = data.process_count;
+                    document.getElementById('uptime').textContent = data.uptime;
+                    document.getElementById('wan_info').textContent = data.wan_info;
+                    document.getElementById('lan_info').textContent = data.lan_info;
+                    document.getElementById('load_avg').textContent = data.load1;
+                    if (data.net_speed) {
+                        let totalSpeed = (data.net_speed.down_speed + data.net_speed.up_speed) / 1024;
+                        document.getElementById('net_throughput').innerHTML = totalSpeed.toFixed(1);
+                    }
+                    if (data.disk_speed) {
+                        document.getElementById('disk_read_speed').textContent = (data.disk_speed.read_speed / 1024).toFixed(1);
+                        document.getElementById('disk_write_speed').textContent = (data.disk_speed.write_speed / 1024).toFixed(1);
+                    }
+                    updateAllCharts(data);
+                })
+                .catch(error => console.error('Fetch error:', error));
+        }
+        document.addEventListener('DOMContentLoaded', function() {
+            renderAppGrid();
+            cpuChart = initChart('cpuChart', 'CPU%', '#64b5f6', { fixedMin: 0, fixedMax: 100 });
+            memoryChart = initChart('memoryChart', '内存%', '#81c784', { fixedMin: 0, fixedMax: 100 });
+            tempChart = initChart('tempChart', '温度°C', '#e57373', { fixedMin: 0, fixedMax: 100 });
+            netChart = initChart('netChart', '网速', '#4fc3f7', { isMulti: true });
+            diskChart = initChart('diskChart', '磁盘IO', '#ffb74d', { isMulti: true });
+            const loadCanvas = document.getElementById('loadChart');
+            if (loadCanvas) {
+                const rect = loadCanvas.getBoundingClientRect();
+                loadCanvas.width = rect.width || 500;
+                loadCanvas.height = 180;
+                loadChart = {
+                    ctx: loadCanvas.getContext('2d'),
+                    width: loadCanvas.width,
+                    height: loadCanvas.height,
+                };
+            }
+            const dropdownBtn = document.getElementById('dropdown-btn');
+            const dropdownContent = document.getElementById('dropdown-content');
+            const closeBtn = document.getElementById('close-dropdown');
+            dropdownBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                dropdownContent.classList.toggle('show');
+            });
+            closeBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                dropdownContent.classList.remove('show');
+            });
+            dropdownContent.addEventListener('click', function(e) {
+                if (e.target === this) {
+                    this.classList.remove('show');
+                }
+            });
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    dropdownContent.classList.remove('show');
+                }
+            });
+            updateInfo();
+            setInterval(updateInfo, 2000);
+            window.addEventListener('resize', () => {
+                const charts = [cpuChart, memoryChart, tempChart, netChart, diskChart];
+                charts.forEach(ch => {
+                    if (ch && ch.ctx) {
+                        const canvas = ch.ctx.canvas;
+                        const newWidth = canvas.clientWidth;
+                        const newHeight = canvas.clientHeight;
+                        canvas.width = newWidth;
+                        canvas.height = newHeight;
+                        ch.width = newWidth;
+                        ch.height = newHeight;
+                    }
+                });
+                if (loadChart && loadChart.ctx) {
+                    const lc = loadChart.ctx.canvas;
+                    lc.width = lc.clientWidth;
+                    lc.height = 180;
+                    loadChart.width = lc.width;
+                    loadChart.height = lc.height;
+                }
+                updateInfo();
+            });
+        });
+    </script>
+</body>
+</html>

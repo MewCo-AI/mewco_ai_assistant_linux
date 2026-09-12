@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <link rel="icon" type="image/png" href="assets/image/logo.png"/>
+    <title>跨端互联 - 枫云AI助手Linux版</title>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;}
+        body{background:linear-gradient(135deg,#0f172a 0%,#1e293b 50%,#0f172a 100%);color:#ffffff;min-height:100vh;padding:20px;display:flex;align-items:center;justify-content:center;}
+        .container{max-width:600px;width:100%;margin:0 auto;}
+        h1{text-align:center;font-size:24px;margin-bottom:20px;display:flex;align-items:center;justify-content:center;gap:10px;}
+        .logo{width:32px;height:32px;background:linear-gradient(135deg,#3b82f6,#1d4ed8);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;}
+        .card{background:rgba(30,41,59,0.7);backdrop-filter:blur(15px);border:1px solid rgba(255,255,255,0.1);border-radius:24px;padding:30px;text-align:center;}
+        .qr-container{background:#ffffff;border-radius:20px;padding:20px;margin:20px 0;display:inline-block;box-shadow:0 8px 32px rgba(0,0,0,0.3);}
+        .qr-container img{display:block;width:250px;height:250px;border-radius:12px;}
+        .url-display{background:rgba(0,0,0,0.3);border-radius:16px;padding:16px 20px;margin:20px 0;word-break:break-all;font-size:16px;color:#94a3b8;border:1px solid rgba(255,255,255,0.05);}
+        .url-display .label{font-size:13px;color:#64748b;margin-bottom:6px;display:block;}
+        .url-display .url{color:#60a5fa;font-weight:500;font-size:18px;letter-spacing:0.5px;}
+        .hint{font-size:16px;color:#94a3b8;line-height:1.6;}
+        .hint .icon{margin-right:6px;}
+        .hint strong{color:#10b981;}
+        .devices-section{margin-top:24px;padding-top:20px;border-top:1px solid rgba(255,255,255,0.08);}
+        .devices-title{font-size:14px;color:#64748b;margin-bottom:12px;display:flex;align-items:center;justify-content:center;gap:8px;}
+        .device-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,0.06);padding:8px 16px;border-radius:30px;font-size:14px;color:#f1f5f9;margin:4px 6px;}
+        .device-badge .dot{width:8px;height:8px;border-radius:50%;display:inline-block;}
+        .device-badge .dot.online{background:#10b981;box-shadow:0 0 8px rgba(16,185,129,0.4);}
+        .device-badge .dot.offline{background:#64748b;}
+        .back-btn{position:fixed;top:20px;right:20px;font-size:28px;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);border-radius:50%;width:48px;height:48px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all 0.2s ease;color:#fff;text-decoration:none;z-index:1000;backdrop-filter:blur(10px);}
+        .back-btn:hover{background:rgba(255,255,255,0.2);transform:scale(1.05);}
+        .back-btn:active{transform:scale(0.95);}
+        .loading-text{color:#64748b;padding:40px 0;font-size:15px;}
+        @media(max-width:600px){
+            body{padding:15px;}
+            .card{padding:20px;}
+            .qr-container{padding:15px;}
+            .qr-container img{width:200px;height:200px;}
+            .url-display .url{font-size:15px;}
+            .back-btn{top:12px;right:12px;width:40px;height:40px;font-size:22px;}
+            .hint{font-size:14px;}
+            .device-badge{font-size:12px;padding:6px 12px;}
+        }
+        @media(max-width:400px){
+            .qr-container img{width:160px;height:160px;}
+            .card{padding:16px;}
+        }
+    </style>
+</head>
+<body>
+    <a href="javascript:window.close()" class="back-btn" title="返回">↩️</a>
+    <div class="container">
+        <h1><div class="logo"><img src="assets/image/logo.png" width="30" height="30"></div>跨端互联</h1>
+        <div class="card">
+            <div class="qr-container">
+                <img id="qrCode" src="" alt="加载中..." onerror="this.alt='二维码加载失败';this.style.display='none';document.getElementById('qrError').style.display='block';">
+                <div id="qrError" style="display:none;padding:60px 20px;color:#000000;font-size:14px;">正在生成二维码...<br></div>
+            </div>
+
+            <div class="url-display">
+                <span class="label">🌐 访问地址</span>
+                <span class="url" id="accessUrl">加载中...</span>
+            </div>
+            <div class="hint">
+                <span class="icon">📱</span>
+                使用手机、平板等设备的相机扫码访问，<strong>即可跨端无缝使用</strong>
+            </div>
+            <div class="devices-section">
+                <div class="devices-title">
+                    局域网网络设备
+                </div>
+                <div id="devicesContainer">
+                    <span class="device-badge" id="phoneBadge">
+                        <span class="dot offline"></span> 手机 / 平板
+                    </span>
+                </div>
+                <div style="font-size:12px;color:#64748b;margin-top:10px;">
+                    🛜 确保设备连接同一Wi-Fi网络
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        async function loadQrAndUrl() {
+            try {
+                const res = await fetch('/api/link-info');
+                const data = await res.json();
+                if (data.qr_code) {
+                    document.getElementById('qrCode').src = data.qr_code;
+                    document.getElementById('qrCode').style.display = 'block';
+                    document.getElementById('qrError').style.display = 'none';
+                } else {
+                    document.getElementById('qrCode').style.display = 'none';
+                    document.getElementById('qrError').style.display = 'block';
+                }
+                document.getElementById('accessUrl').textContent = data.url || '获取失败';
+            } catch(e) {
+                document.getElementById('qrCode').style.display = 'none';
+                document.getElementById('qrError').style.display = 'block';
+                document.getElementById('qrError').textContent = '⚠️ 枫云AI助手Linux版服务未开启';
+                document.getElementById('accessUrl').textContent = '加载失败，请刷新重试';
+            }
+        }
+        function checkMobileDevice() {
+            const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|Windows Phone/i.test(navigator.userAgent);
+            const badge = document.getElementById('phoneBadge');
+            if (isMobile) {
+                badge.innerHTML = '<span class="dot online"></span> 手机 / 平板';
+            } else {
+                badge.innerHTML = '<span class="dot offline"></span> 手机 / 平板';
+            }
+        }
+        loadQrAndUrl();
+        checkMobileDevice();
+        setInterval(loadQrAndUrl, 30000);
+    </script>
+</body>
+</html>

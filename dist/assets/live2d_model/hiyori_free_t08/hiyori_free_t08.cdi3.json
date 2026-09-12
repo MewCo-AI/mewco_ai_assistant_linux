@@ -1,0 +1,276 @@
+{
+	"Version": 3,
+	"Parameters": [
+		{
+			"Id": "ParamAngleX",
+			"GroupId": "ParamGroupFace",
+			"Name": "角度 X"
+		},
+		{
+			"Id": "ParamAngleY",
+			"GroupId": "ParamGroupFace",
+			"Name": "角度 Y"
+		},
+		{
+			"Id": "ParamAngleZ",
+			"GroupId": "ParamGroupFace",
+			"Name": "角度 Z"
+		},
+		{
+			"Id": "ParamCheek",
+			"GroupId": "ParamGroupFace",
+			"Name": "脸颊泛红"
+		},
+		{
+			"Id": "ParamEyeLOpen",
+			"GroupId": "ParamGroupEyes",
+			"Name": "左眼 开闭"
+		},
+		{
+			"Id": "ParamEyeLSmile",
+			"GroupId": "ParamGroupEyes",
+			"Name": "左眼 微笑"
+		},
+		{
+			"Id": "ParamEyeROpen",
+			"GroupId": "ParamGroupEyes",
+			"Name": "右眼 开闭"
+		},
+		{
+			"Id": "ParamEyeRSmile",
+			"GroupId": "ParamGroupEyes",
+			"Name": "右眼 微笑"
+		},
+		{
+			"Id": "ParamEyeBallX",
+			"GroupId": "ParamGroupEyeballs",
+			"Name": "眼珠 X"
+		},
+		{
+			"Id": "ParamEyeBallY",
+			"GroupId": "ParamGroupEyeballs",
+			"Name": "眼珠 Y"
+		},
+		{
+			"Id": "ParamBrowLForm",
+			"GroupId": "ParamGroupBrows",
+			"Name": "左眉 变形"
+		},
+		{
+			"Id": "ParamBrowRForm",
+			"GroupId": "ParamGroupBrows",
+			"Name": "右眉 变形"
+		},
+		{
+			"Id": "ParamMouthForm",
+			"GroupId": "ParamGroupMouth",
+			"Name": "嘴 变形"
+		},
+		{
+			"Id": "ParamMouthOpenY",
+			"GroupId": "ParamGroupMouth",
+			"Name": "嘴 开闭"
+		},
+		{
+			"Id": "ParamBodyAngleX",
+			"GroupId": "ParamGroupBody",
+			"Name": "身体的旋转 X"
+		},
+		{
+			"Id": "ParamBodyAngleY",
+			"GroupId": "ParamGroupBody",
+			"Name": "身体的旋转 Y"
+		},
+		{
+			"Id": "ParamBodyAngleZ",
+			"GroupId": "ParamGroupBody",
+			"Name": "身体的旋转 Z"
+		},
+		{
+			"Id": "ParamBreath",
+			"GroupId": "ParamGroupBody",
+			"Name": "呼吸"
+		},
+		{
+			"Id": "ParamArmLA",
+			"GroupId": "ParamGroupArms",
+			"Name": "左臂 A"
+		},
+		{
+			"Id": "ParamArmRA",
+			"GroupId": "ParamGroupArms",
+			"Name": "右臂 A"
+		},
+		{
+			"Id": "ParamBustY",
+			"GroupId": "ParamGroupSway",
+			"Name": "胸部 摇动"
+		},
+		{
+			"Id": "ParamHairAhoge",
+			"GroupId": "ParamGroupSway",
+			"Name": "头发摇动 呆毛"
+		},
+		{
+			"Id": "ParamHairFront",
+			"GroupId": "ParamGroupSway",
+			"Name": "头发摇动 前"
+		},
+		{
+			"Id": "ParamHairSide",
+			"GroupId": "ParamGroupSway",
+			"Name": "头发摇动 侧"
+		},
+		{
+			"Id": "ParamHairBack",
+			"GroupId": "ParamGroupSway",
+			"Name": "头发摇动 后"
+		},
+		{
+			"Id": "ParamHairSideUp",
+			"GroupId": "ParamGroupSway",
+			"Name": "辫子的摇动"
+		},
+		{
+			"Id": "ParamRibbon",
+			"GroupId": "ParamGroupSway",
+			"Name": "蝴蝶结的摇动"
+		},
+		{
+			"Id": "ParamSkirt",
+			"GroupId": "ParamGroupSway",
+			"Name": "短裙的摇动"
+		},
+		{
+			"Id": "ParamSideUpRibbon",
+			"GroupId": "ParamGroupSway",
+			"Name": "发饰的摇动"
+		}
+	],
+	"ParameterGroups": [
+		{
+			"Id": "ParamGroupFace",
+			"GroupId": "",
+			"Name": "脸"
+		},
+		{
+			"Id": "ParamGroupEyes",
+			"GroupId": "",
+			"Name": "眼睛"
+		},
+		{
+			"Id": "ParamGroupEyeballs",
+			"GroupId": "",
+			"Name": "眼珠"
+		},
+		{
+			"Id": "ParamGroupBrows",
+			"GroupId": "",
+			"Name": "眉毛"
+		},
+		{
+			"Id": "ParamGroupMouth",
+			"GroupId": "",
+			"Name": "嘴"
+		},
+		{
+			"Id": "ParamGroupBody",
+			"GroupId": "",
+			"Name": "身体"
+		},
+		{
+			"Id": "ParamGroupArms",
+			"GroupId": "",
+			"Name": "手臂"
+		},
+		{
+			"Id": "ParamGroupSway",
+			"GroupId": "",
+			"Name": "摇动"
+		}
+	],
+	"Parts": [
+		{
+			"Id": "PartCore",
+			"Name": "Core"
+		},
+		{
+			"Id": "PartCheek",
+			"Name": "脸颊"
+		},
+		{
+			"Id": "PartBrow",
+			"Name": "眉毛"
+		},
+		{
+			"Id": "PartEye",
+			"Name": "眼睛"
+		},
+		{
+			"Id": "PartNose",
+			"Name": "鼻子"
+		},
+		{
+			"Id": "PartMouth",
+			"Name": "口"
+		},
+		{
+			"Id": "PartFace",
+			"Name": "脸"
+		},
+		{
+			"Id": "PartEar",
+			"Name": "耳朵"
+		},
+		{
+			"Id": "PartHairSide",
+			"Name": "侧发"
+		},
+		{
+			"Id": "PartHairFront",
+			"Name": "前发"
+		},
+		{
+			"Id": "PartHairBack",
+			"Name": "后发"
+		},
+		{
+			"Id": "PartNeck",
+			"Name": "脖子"
+		},
+		{
+			"Id": "PartBody",
+			"Name": "身体"
+		},
+		{
+			"Id": "PartArmA",
+			"Name": "手臂A"
+		},
+		{
+			"Id": "PartBackground",
+			"Name": "背景"
+		},
+		{
+			"Id": "PartSketch",
+			"Name": "[参考图]"
+		},
+		{
+			"Id": "PartEyeBall",
+			"Name": "眼珠"
+		}
+	],
+	"CombinedParameters": [
+		[
+			"ParamAngleX",
+			"ParamAngleY"
+		],
+		[
+			"ParamEyeBallX",
+			"ParamEyeBallY"
+		],
+		[
+			"ParamMouthForm",
+			"ParamMouthOpenY"
+		]
+	]
+}

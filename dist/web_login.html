@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link rel="icon" type="image/png" href="assets/image/logo.png" />
+    <title>登录 - 枫云AI助手Linux版</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: #1e2a3a; display: flex; justify-content: center; align-items: center; min-height: 100vh; min-height: 100dvh; margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", sans-serif; padding: 16px; }
+        .login-box { background: #1a2a36; padding: 32px 24px 28px; border-radius: 16px; box-shadow: 0 8px 24px rgba(0,0,0,0.4); width: 100%; max-width: 360px; text-align: center; transition: padding 0.2s; }
+        .login-box img { width: 50px; height: 50px; display: block; margin: 0 auto 12px; }
+        .login-box h1 { color: #eef2f5; font-size: 22px; font-weight: 600; margin-bottom: 20px; letter-spacing: 0.5px; }
+        .login-box form { display: flex; flex-direction: column; gap: 12px; }
+        .login-box input { width: 100%; padding: 14px 16px; border: none; border-radius: 10px; background: #0f1a22; color: #eef2f5; font-size: 16px; box-sizing: border-box; outline: none; -webkit-appearance: none; appearance: none; transition: background 0.2s, box-shadow 0.2s; }
+        .login-box input:focus { background: #14222c; box-shadow: 0 0 0 2px #2c5a7a; }
+        .login-box input::placeholder { color: #5a6f7e; font-size: 15px; }
+        .login-box button { width: 100%; padding: 14px; background: #2c5a7a; border: none; border-radius: 10px; color: #fff; font-size: 17px; font-weight: 500; cursor: pointer; transition: background 0.2s, transform 0.1s; box-sizing: border-box; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+        .login-box button:active { background: #3e7a9e; transform: scale(0.97); }
+        .login-box button:hover { background: #3e7a9e; }
+        .error { color: #e57373; margin-top: 4px; font-size: 14px; text-align: center; word-break: break-word; }
+        .hint { color: #8a9aa8; font-size: 13px; margin-top: 14px; text-align: left; line-height: 1.5; }
+        .forgot-pw { color: #8a9aa8; font-size: 13px; margin-top: 6px; text-align: left; cursor: pointer; text-decoration: underline; text-underline-offset: 2px; transition: color 0.2s; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+        .forgot-pw:active { color: #b0c4d8; }
+        .forgot-pw:hover { color: #b0c4d8; }
+        @media (max-width: 400px) { .login-box { padding: 24px 16px 20px; border-radius: 12px; } .login-box h1 { font-size: 20px; margin-bottom: 16px; } .login-box input { padding: 12px 14px; font-size: 15px; } .login-box button { padding: 12px; font-size: 16px; } }
+        @media (min-width: 600px) { .login-box { padding: 44px 40px 36px; max-width: 400px; } .login-box h1 { font-size: 26px; } .login-box input { padding: 16px 18px; font-size: 17px; } .login-box button { padding: 16px; font-size: 18px; } }
+        @supports (padding: max(0px)) { .login-box { padding-left: max(24px, env(safe-area-inset-left)); padding-right: max(24px, env(safe-area-inset-right)); } }
+        @media (hover: none) { .login-box button:hover { background: #2c5a7a; } .login-box button:active { background: #3e7a9e; } .forgot-pw:hover { color: #8a9aa8; } .forgot-pw:active { color: #b0c4d8; } }
+    </style>
+</head>
+<body>
+    <div class="login-box">
+        <img src="assets/image/logo.png" alt="Logo">
+        <h1>枫云AI助手 · 登录</h1>
+        <form method="post">
+            <input type="password" name="password" placeholder="请输入密码" required autofocus>
+            <button type="submit">登录</button>
+            {% if error %}<div class="error">{{ error }}</div>{% endif %}
+        </form>
+        <div class="hint">默认密码为 mewco168</div>
+        <div class="forgot-pw" onclick="alert('请前往软件安装目录 data/db/ ，打开 config.json 滑至最底部 password 字段查看当前密码')">忘记密码？</div>
+    </div>
+</body>
+</html>

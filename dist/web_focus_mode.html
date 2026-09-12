@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <link rel="icon" type="image/png" href="assets/image/logo.png"/>
+    <title>专注模式 - 枫云AI助手Linux版</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: linear-gradient(145deg, #0f172a 0%, #1e293b 50%, #0f172a 100%); color: #eef2f5; font-family: 'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif; min-height: 100vh; display: flex; flex-direction: column; padding: 20px; }
+        .navbar { background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); padding: 0 24px; height: 56px; display: flex; align-items: center; justify-content: space-between; border-radius: 16px; margin-bottom: 24px; border: 1px solid rgba(255, 255, 255, 0.06); flex-shrink: 0; }
+        .logo-area { display: flex; align-items: center; gap: 10px; cursor: default; }
+        .logo-area img { width: 28px; height: 28px; border-radius: 6px; }
+        .logo-area h1 { font-size: 18px; font-weight: 500; margin: 0; }
+        .logo-area h1 span { color: #64b5f6; }
+        .back-btn { background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.1); color: #b8d4e8; font-size: 20px; cursor: pointer; padding: 6px 14px; border-radius: 30px; transition: all 0.2s ease; text-decoration: none; line-height: 1; }
+        .back-btn:hover { background: rgba(255, 255, 255, 0.15); color: #fff; transform: scale(1.02); }
+        .container { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; max-width: 700px; margin: 0 auto; width: 100%; gap: 24px; }
+        .timer-card { background: rgba(26, 42, 54, 0.7); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-radius: 32px; padding: 40px 32px 32px; width: 100%; text-align: center; border: 1px solid rgba(255, 255, 255, 0.06); box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4); transition: border-color 0.5s ease; }
+        .timer-card.break-mode { border-color: rgba(129, 199, 132, 0.3); }
+        .timer-card.focus-mode { border-color: rgba(100, 181, 246, 0.3); }
+        .timer-mode-label { font-size: 14px; font-weight: 500; letter-spacing: 2px; text-transform: uppercase; color: #8aaec0; margin-bottom: 8px; }
+        .timer-mode-label .highlight { color: #64b5f6; transition: color 0.3s ease; }
+        .timer-card.break-mode .timer-mode-label .highlight { color: #81c784; }
+        .progress-ring-container { position: relative; width: 260px; height: 260px; margin: 8px auto 16px; }
+        .progress-ring-container svg { transform: rotate(-90deg); width: 100%; height: 100%; }
+        .progress-ring-bg { fill: none; stroke: rgba(255, 255, 255, 0.06); stroke-width: 8; }
+        .progress-ring-fg { fill: none; stroke: #64b5f6; stroke-width: 8; stroke-linecap: round; transition: stroke-dashoffset 0.5s ease, stroke 0.5s ease; }
+        .timer-card.break-mode .progress-ring-fg { stroke: #81c784; }
+        .timer-display { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; }
+        .timer-display .time { font-size: 58px; font-weight: 700; letter-spacing: 2px; color: #eef2f5; font-variant-numeric: tabular-nums; line-height: 1.1; }
+        .timer-display .sessions-count { font-size: 14px; color: #8aaec0; margin-top: 4px; }
+        .controls { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-top: 4px; }
+        .btn { padding: 12px 28px; border: none; border-radius: 40px; font-size: 15px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; display: inline-flex; align-items: center; gap: 8px; letter-spacing: 0.3px; }
+        .btn:active { transform: scale(0.96); }
+        .btn-primary { background: linear-gradient(135deg, #1e88e5, #1565c0); color: #fff; box-shadow: 0 4px 16px rgba(30, 136, 229, 0.3); }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(30, 136, 229, 0.4); }
+        .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; }
+        .btn-success { background: linear-gradient(135deg, #43a047, #2e7d32); color: #fff; box-shadow: 0 4px 16px rgba(67, 160, 71, 0.3); }
+        .btn-success:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(67, 160, 71, 0.4); }
+        .btn-danger { background: linear-gradient(135deg, #e53935, #c62828); color: #fff; box-shadow: 0 4px 16px rgba(229, 57, 53, 0.3); }
+        .btn-danger:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(229, 57, 53, 0.4); }
+        .btn-outline { background: rgba(255, 255, 255, 0.06); color: #b8d4e8; border: 1px solid rgba(255, 255, 255, 0.1); }
+        .btn-outline:hover { background: rgba(255, 255, 255, 0.12); }
+        .btn-sm { padding: 8px 16px; font-size: 13px; }
+        .settings-row { display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; background: rgba(15, 23, 42, 0.5); border-radius: 20px; padding: 16px 24px; border: 1px solid rgba(255, 255, 255, 0.05); width: 100%; }
+        .settings-group { display: flex; align-items: center; gap: 8px; }
+        .settings-group label { font-size: 13px; color: #8aaec0; font-weight: 500; }
+        .settings-group input[type="number"] { width: 56px; padding: 6px 8px; border-radius: 10px; border: 1px solid rgba(255, 255, 255, 0.1); background: rgba(0, 0, 0, 0.3); color: #eef2f5; font-size: 14px; text-align: center; font-weight: 600; outline: none; transition: border-color 0.2s; }
+        .settings-group input[type="number"]:focus { border-color: #64b5f6; }
+        .settings-group input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; }
+        .settings-group .unit { font-size: 13px; color: #6c8ea0; }
+        .task-section { width: 100%; background: rgba(26, 42, 54, 0.5); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border-radius: 20px; padding: 20px 24px; border: 1px solid rgba(255, 255, 255, 0.05); }
+        .task-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+        .task-header h3 { font-size: 15px; font-weight: 500; color: #b8d4e8; }
+        .task-header .task-count { font-size: 12px; color: #6c8ea0; background: rgba(255, 255, 255, 0.05); padding: 2px 12px; border-radius: 20px; }
+        .task-input-row { display: flex; gap: 10px; margin-bottom: 12px; }
+        .task-input-row input { flex: 1; padding: 10px 16px; border-radius: 14px; border: 1px solid rgba(255, 255, 255, 0.08); background: rgba(0, 0, 0, 0.3); color: #eef2f5; font-size: 14px; outline: none; transition: border-color 0.2s; }
+        .task-input-row input:focus { border-color: #64b5f6; }
+        .task-input-row input::placeholder { color: #6c8ea0; }
+        .task-input-row .btn { padding: 10px 20px; flex-shrink: 0; }
+        .task-list { max-height: 160px; overflow-y: auto; padding-right: 4px; }
+        .task-list::-webkit-scrollbar { width: 4px; }
+        .task-list::-webkit-scrollbar-track { background: transparent; }
+        .task-list::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.15); border-radius: 4px; }
+        .task-item { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; border-radius: 12px; margin-bottom: 4px; background: rgba(255, 255, 255, 0.03); transition: background 0.2s; }
+        .task-item:hover { background: rgba(255, 255, 255, 0.06); }
+        .task-item .task-text { font-size: 14px; color: #eef2f5; flex: 1; cursor: pointer; padding: 4px 0; }
+        .task-item .task-text.completed { text-decoration: line-through; color: #6c8ea0; }
+        .task-item .task-actions { display: flex; gap: 6px; flex-shrink: 0; }
+        .task-item .task-actions button { background: none; border: none; color: #6c8ea0; cursor: pointer; font-size: 16px; padding: 2px 6px; border-radius: 6px; transition: all 0.2s; line-height: 1; }
+        .task-item .task-actions button:hover { color: #eef2f5; background: rgba(255, 255, 255, 0.08); }
+        .task-item .task-actions .delete-btn:hover { color: #ef5350; }
+        .task-item .task-actions .complete-btn:hover { color: #81c784; }
+        .empty-tasks { text-align: center; color: #6c8ea0; font-size: 14px; padding: 20px 0; }
+        .notification { position: fixed; top: 24px; left: 50%; transform: translateX(-50%); background: rgba(15, 23, 42, 0.92); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); padding: 14px 32px; border-radius: 40px; border: 1px solid rgba(255, 255, 255, 0.08); box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5); color: #eef2f5; font-size: 15px; font-weight: 500; display: none; z-index: 1000; max-width: 90%; text-align: center; animation: slideDown 0.4s ease; }
+        .notification.show { display: block; }
+        @keyframes slideDown { from { opacity: 0; transform: translateX(-50%) translateY(-20px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
+        .stats { display: flex; gap: 24px; justify-content: center; margin-top: 4px; }
+        .stats .stat-item { text-align: center; }
+        .stats .stat-item .number { font-size: 22px; font-weight: 700; color: #64b5f6; }
+        .stats .stat-item .label { font-size: 12px; color: #6c8ea0; display: block; margin-top: 2px; }
+        .stats .stat-item.break-stat .number { color: #81c784; }
+        .sound-settings-row { display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; background: rgba(15, 23, 42, 0.5); border-radius: 20px; padding: 16px 24px; border: 1px solid rgba(255, 255, 255, 0.05); width: 100%; }
+        .sound-settings-group { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+        .sound-settings-group label { font-size: 13px; color: #8aaec0; font-weight: 500; }
+        .sound-settings-group select { padding: 6px 12px; border-radius: 10px; border: 1px solid rgba(255, 255, 255, 0.1); background: rgba(0, 0, 0, 0.3); color: #eef2f5; font-size: 13px; outline: none; transition: border-color 0.2s; cursor: pointer; min-width: 80px; }
+        .sound-settings-group select:focus { border-color: #64b5f6; }
+        .sound-settings-group select option { background: #1e293b; color: #eef2f5; }
+        .sound-settings-group input[type="range"] { width: 80px; height: 4px; -webkit-appearance: none; background: rgba(255, 255, 255, 0.15); border-radius: 2px; outline: none; transition: background 0.2s; }
+        .sound-settings-group input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 14px; height: 14px; border-radius: 50%; background: #64b5f6; cursor: pointer; box-shadow: 0 2px 8px rgba(100, 181, 246, 0.3); }
+        .sound-settings-group input[type="range"]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 50%; background: #64b5f6; cursor: pointer; border: none; }
+        .sound-settings-group .volume-value { font-size: 12px; color: #8aaec0; min-width: 32px; text-align: center; }
+        .sound-status { font-size: 12px; color: #6c8ea0; }
+        .sound-status .playing { color: #81c784; }
+        .sound-status .stopped { color: #ef5350; }
+        @media (max-width: 640px) { body { padding: 12px; } .navbar { padding: 0 16px; height: 48px; border-radius: 12px; margin-bottom: 16px; } .logo-area h1 { font-size: 15px; } .timer-card { padding: 28px 20px 24px; border-radius: 24px; } .progress-ring-container { width: 200px; height: 200px; } .timer-display .time { font-size: 44px; } .settings-row { padding: 12px 16px; gap: 12px; } .settings-group input[type="number"] { width: 48px; padding: 4px 6px; font-size: 13px; } .controls .btn { padding: 10px 18px; font-size: 13px; } .task-section { padding: 16px; } .stats { gap: 16px; } .stats .stat-item .number { font-size: 18px; } .notification { font-size: 13px; padding: 12px 20px; top: 16px; } .sound-settings-row { padding: 12px 16px; gap: 10px; } .sound-settings-group input[type="range"] { width: 60px; } .sound-settings-group select { font-size: 12px; padding: 4px 8px; min-width: 70px; } }
+        @media (max-width: 400px) { .progress-ring-container { width: 160px; height: 160px; } .timer-display .time { font-size: 36px; } .timer-card { padding: 20px 14px 18px; } .controls { gap: 8px; } .controls .btn { padding: 8px 14px; font-size: 12px; } .sound-settings-group input[type="range"] { width: 50px; } }
+    </style>
+</head>
+<body>
+    <div class="notification" id="notification"></div>
+    <nav class="navbar">
+        <div class="logo-area">
+            <img src="assets/image/logo.png" alt="Logo">
+            <h1>枫云AI助手 <span>专注模式</span></h1>
+        </div>
+        <button class="back-btn" onclick="window.close()" title="返回">↩️</button>
+    </nav>
+    <div class="container">
+        <div class="timer-card focus-mode" id="timerCard">
+            <div class="timer-mode-label">
+                <span class="highlight" id="modeLabel">专注</span> · <span id="sessionLabel">第 1 轮专注</span>
+            </div>
+            <div class="progress-ring-container">
+                <svg viewBox="0 0 120 120">
+                    <circle class="progress-ring-bg" cx="60" cy="60" r="52" />
+                    <circle class="progress-ring-fg" id="progressRing" cx="60" cy="60" r="52"
+                            stroke-dasharray="326.726" stroke-dashoffset="0" />
+                </svg>
+                <div class="timer-display">
+                    <div class="time" id="timerDisplay">25:00</div>
+                    <div class="sessions-count" id="sessionsCount">已完成 0 轮</div>
+                </div>
+            </div>
+            <div class="controls">
+                <button class="btn btn-primary" id="startBtn">▶ 开始</button>
+                <button class="btn btn-danger" id="resetBtn" disabled>⟲ 重置</button>
+                <button class="btn btn-outline btn-sm" id="skipBtn" disabled>⏭ 跳过</button>
+            </div>
+            <div class="stats" style="margin-top: 16px;">
+                <div class="stat-item">
+                    <span class="number" id="focusCount">0</span>
+                    <span class="label">专注次数</span>
+                </div>
+                <div class="stat-item break-stat">
+                    <span class="number" id="breakCount">0</span>
+                    <span class="label">休息次数</span>
+                </div>
+                <div class="stat-item">
+                    <span class="number" id="totalMinutes">0</span>
+                    <span class="label">总时长 (分钟)</span>
+                </div>
+            </div>
+        </div>
+        <div class="sound-settings-row">
+            <div class="sound-settings-group">
+                <label>🎵 专注音</label>
+                <select id="focusSound">
+                    <option value="雨天">雨天</option>
+                    <option value="春风">春风</option>
+                    <option value="篝火">篝火</option>
+                    <option value="海底">海底</option>
+                    <option value="海滩">海滩</option>
+                    <option value="火车">火车</option>
+                    <option value="森林">森林</option>
+                    <option value="溪流">溪流</option>
+                    <option value="夏夜">夏夜</option>
+                </select>
+            </div>
+            <div class="sound-settings-group">
+                <label>🎵 休息音</label>
+                <select id="breakSound">
+                    <option value="海滩">海滩</option>
+                    <option value="雨天">雨天</option>
+                    <option value="春风">春风</option>
+                    <option value="篝火">篝火</option>
+                    <option value="海底">海底</option>
+                    <option value="火车">火车</option>
+                    <option value="森林">森林</option>
+                    <option value="溪流">溪流</option>
+                    <option value="夏夜">夏夜</option>
+                </select>
+            </div>
+            <div class="sound-settings-group">
+                <label>🔊 音量</label>
+                <input type="range" id="volumeSlider" min="0" max="100" value="100">
+                <span class="volume-value" id="volumeValue">100%</span>
+            </div>
+            <div class="sound-settings-group">
+                <span class="sound-status" id="soundStatus">🔇 未播放</span>
+            </div>
+        </div>
+        <div class="settings-row">
+            <div class="settings-group">
+                <label>专注</label>
+                <input type="number" id="focusMinutes" value="25" min="1" max="120">
+                <span class="unit">分</span>
+            </div>
+            <div class="settings-group">
+                <label>休息</label>
+                <input type="number" id="breakMinutes" value="5" min="1" max="60">
+                <span class="unit">分</span>
+            </div>
+            <div class="settings-group">
+                <label>长休</label>
+                <input type="number" id="longBreakMinutes" value="15" min="1" max="60">
+                <span class="unit">分</span>
+            </div>
+            <div class="settings-group">
+                <label>轮数</label>
+                <input type="number" id="sessionsBeforeLongBreak" value="4" min="1" max="10">
+                <span class="unit">轮</span>
+            </div>
+        </div>
+        <div class="task-section">
+            <div class="task-header">
+                <h3>📋 今日任务</h3>
+                <span class="task-count" id="taskCount">0 项</span>
+            </div>
+            <div class="task-input-row">
+                <input type="text" id="taskInput" placeholder="输入任务，按 Enter 添加..." maxlength="60">
+                <button class="btn btn-primary btn-sm" id="addTaskBtn">添加</button>
+            </div>
+            <div class="task-list" id="taskList">
+                <div class="empty-tasks">还没有任务，添加一个吧 🎯</div>
+            </div>
+        </div>
+    </div>
+    <script>
+        const SOUND_NAMES = ['春风', '篝火', '海底', '海滩', '火车', '森林', '溪流', '夏夜', '雨天'];
+        function playVoicePrompt(filename) {
+            try {
+                const audio = new Audio(`/focus_audio/${encodeURIComponent(filename)}`);
+                audio.volume = 0.8;
+                audio.play().catch(e => {
+                    console.warn('语音提示播放失败:', e);
+                });
+            } catch (e) {
+                console.warn('语音提示播放失败:', e);
+            }
+        }
+        class SoundManager {
+            constructor() {
+                this.focusAudio = null;
+                this.breakAudio = null;
+                this.focusSoundName = '雨天';
+                this.breakSoundName = '海滩';
+                this.masterVolume = 0.7;
+                this.isFocusPlaying = false;
+                this.isBreakPlaying = false;
+                this.currentMode = 'idle';
+            }
+            setFocusSound(name) {
+                if (SOUND_NAMES.includes(name)) {
+                    this.focusSoundName = name;
+                }
+            }
+            setBreakSound(name) {
+                if (SOUND_NAMES.includes(name)) {
+                    this.breakSoundName = name;
+                }
+            }
+            setVolume(val) {
+                this.masterVolume = Math.max(0, Math.min(1, val / 100));
+                this.updateVolume();
+            }
+            updateVolume() {
+                if (this.focusAudio) {
+                    this.focusAudio.volume = this.masterVolume;
+                }
+                if (this.breakAudio) {
+                    this.breakAudio.volume = this.masterVolume;
+                }
+            }
+            getSoundUrl(name) {
+                return `/relax_audio/${encodeURIComponent(name)}.mp3`;
+            }
+            createAudio(name) {
+                const audio = new Audio(this.getSoundUrl(name));
+                audio.loop = true;
+                audio.volume = this.masterVolume;
+                return audio;
+            }
+            playFocus() {
+                this.stopAll();
+                this.currentMode = 'focus';
+                this.focusAudio = this.createAudio(this.focusSoundName);
+                this.focusAudio.play().catch(e => {
+                    console.warn('专注音播放失败:', e);
+                });
+                this.isFocusPlaying = true;
+                this.updateStatusDisplay();
+            }
+            playBreak() {
+                this.stopAll();
+                this.currentMode = 'break';
+                this.breakAudio = this.createAudio(this.breakSoundName);
+                this.breakAudio.play().catch(e => {
+                    console.warn('休息音播放失败:', e);
+                });
+                this.isBreakPlaying = true;
+                this.updateStatusDisplay();
+            }
+            stopAll() {
+                if (this.focusAudio) {
+                    this.focusAudio.pause();
+                    this.focusAudio.currentTime = 0;
+                    this.focusAudio = null;
+                }
+                if (this.breakAudio) {
+                    this.breakAudio.pause();
+                    this.breakAudio.currentTime = 0;
+                    this.breakAudio = null;
+                }
+                this.isFocusPlaying = false;
+                this.isBreakPlaying = false;
+                this.currentMode = 'idle';
+                this.updateStatusDisplay();
+            }
+            switchToFocus() {
+                this.playFocus();
+            }
+            switchToBreak() {
+                this.playBreak();
+            }
+            updateStatusDisplay() {
+                const el = document.getElementById('soundStatus');
+                if (this.isFocusPlaying) {
+                    el.innerHTML = `🎵 专注音: <span class="playing">${this.focusSoundName}</span>`;
+                } else if (this.isBreakPlaying) {
+                    el.innerHTML = `🎵 休息音: <span class="playing">${this.breakSoundName}</span>`;
+                } else {
+                    el.innerHTML = `🔇 未播放`;
+                }
+            }
+        }
+        const state = {
+            status: 'idle',
+            previousStatus: 'idle',
+            timeRemaining: 25 * 60,
+            totalTime: 25 * 60,
+            sessionCount: 0,
+            focusCount: 0,
+            breakCount: 0,
+            totalMinutes: 0,
+            focusMinutes: 25,
+            breakMinutes: 5,
+            longBreakMinutes: 15,
+            sessionsBeforeLongBreak: 4,
+            currentFocusMinutes: 25,
+            cycleFocusCount: 0,
+            timerInterval: null,
+            audioContext: null,
+            soundManager: null,
+        };
+        const $ = id => document.getElementById(id);
+        const timerDisplay = $('timerDisplay');
+        const progressRing = $('progressRing');
+        const timerCard = $('timerCard');
+        const modeLabel = $('modeLabel');
+        const sessionLabel = $('sessionLabel');
+        const sessionsCount = $('sessionsCount');
+        const startBtn = $('startBtn');
+        const resetBtn = $('resetBtn');
+        const skipBtn = $('skipBtn');
+        const focusCountEl = $('focusCount');
+        const breakCountEl = $('breakCount');
+        const totalMinutesEl = $('totalMinutes');
+        const focusMinutesInput = $('focusMinutes');
+        const breakMinutesInput = $('breakMinutes');
+        const longBreakMinutesInput = $('longBreakMinutes');
+        const sessionsBeforeLongBreakInput = $('sessionsBeforeLongBreak');
+        const taskInput = $('taskInput');
+        const addTaskBtn = $('addTaskBtn');
+        const taskList = $('taskList');
+        const taskCount = $('taskCount');
+        const notification = $('notification');
+        const focusSoundSelect = $('focusSound');
+        const breakSoundSelect = $('breakSound');
+        const volumeSlider = $('volumeSlider');
+        const volumeValue = $('volumeValue');
+        let notificationTimeout = null;
+        state.soundManager = new SoundManager();
+        focusSoundSelect.value = '雨天';
+        breakSoundSelect.value = '海滩';
+        state.soundManager.setFocusSound('雨天');
+        state.soundManager.setBreakSound('海滩');
+        volumeSlider.addEventListener('input', function() {
+            const val = parseInt(this.value);
+            volumeValue.textContent = val + '%';
+            state.soundManager.setVolume(val);
+        });
+        focusSoundSelect.addEventListener('change', function() {
+            state.soundManager.setFocusSound(this.value);
+            if (state.soundManager.isFocusPlaying) {
+                state.soundManager.playFocus();
+            }
+        });
+        breakSoundSelect.addEventListener('change', function() {
+            state.soundManager.setBreakSound(this.value);
+            if (state.soundManager.isBreakPlaying) {
+                state.soundManager.playBreak();
+            }
+        });
+        function formatTime(seconds) {
+            const m = Math.floor(seconds / 60);
+            const s = seconds % 60;
+            return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+        }
+        function getCircumference() {
+            return 2 * Math.PI * 52;
+        }
+        function updateProgress(percent) {
+            const circumference = getCircumference();
+            const offset = circumference * (1 - percent);
+            progressRing.setAttribute('stroke-dashoffset', offset);
+        }
+        function showNotification(text, duration = 3000) {
+            notification.textContent = text;
+            notification.classList.add('show');
+            clearTimeout(notificationTimeout);
+            notificationTimeout = setTimeout(() => {
+                notification.classList.remove('show');
+            }, duration);
+        }
+        function playAlarm() {
+            try {
+                if (!state.audioContext) {
+                    state.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                const ctx = state.audioContext;
+                for (let i = 0; i < 2; i++) {
+                    setTimeout(() => {
+                        const osc = ctx.createOscillator();
+                        const gain = ctx.createGain();
+                        osc.connect(gain);
+                        gain.connect(ctx.destination);
+                        osc.frequency.value = 880;
+                        osc.type = 'sine';
+                        gain.gain.setValueAtTime(0.3, ctx.currentTime);
+                        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
+                        osc.start(ctx.currentTime);
+                        osc.stop(ctx.currentTime + 0.3);
+                    }, i * 400);
+                }
+            } catch (e) {
+                console.log('音频提示失败:', e);
+            }
+        }
+        function updateUI() {
+            timerDisplay.textContent = formatTime(state.timeRemaining);
+            const progress = state.timeRemaining / state.totalTime;
+            updateProgress(progress);
+            focusCountEl.textContent = state.focusCount;
+            breakCountEl.textContent = state.breakCount;
+            totalMinutesEl.textContent = state.totalMinutes;
+            const effectiveStatus = state.status === 'paused' ? (state.previousStatus || 'running') : state.status;
+            const isBreak = effectiveStatus === 'break' || effectiveStatus === 'longBreak';
+            const isFocus = effectiveStatus === 'running' || effectiveStatus === 'idle';
+            timerCard.classList.toggle('break-mode', isBreak);
+            timerCard.classList.toggle('focus-mode', isFocus);
+            if (isBreak) {
+                modeLabel.textContent = effectiveStatus === 'longBreak' ? '长休息' : '休息';
+                modeLabel.style.color = '#81c784';
+            } else {
+                modeLabel.textContent = '专注';
+                modeLabel.style.color = '#64b5f6';
+            }
+            sessionLabel.textContent = `第 ${state.focusCount + 1} 轮专注`;
+            sessionsCount.textContent = `已完成 ${state.focusCount} 轮`;
+            const isRunning = state.status === 'running' || state.status === 'break' || state.status === 'longBreak';
+            startBtn.textContent = isRunning ? '⏸ 暂停' : '▶ 开始';
+            startBtn.disabled = false;
+            resetBtn.disabled = state.status === 'idle' && state.timeRemaining === state.totalTime;
+            skipBtn.disabled = !isRunning;
+            state.soundManager.updateStatusDisplay();
+        }
+        function loadConfig() {
+            state.focusMinutes = parseInt(focusMinutesInput.value) || 25;
+            state.breakMinutes = parseInt(breakMinutesInput.value) || 5;
+            state.longBreakMinutes = parseInt(longBreakMinutesInput.value) || 15;
+            state.sessionsBeforeLongBreak = parseInt(sessionsBeforeLongBreakInput.value) || 4;
+        }
+        function startFocus() {
+            clearInterval(state.timerInterval);
+            state.status = 'running';
+            state.totalTime = state.focusMinutes * 60;
+            state.timeRemaining = state.totalTime;
+            state.currentFocusMinutes = state.focusMinutes;
+            state.soundManager.switchToFocus();
+            playVoicePrompt('专注开始，加油！.mp3');
+            showNotification('🎯 专注开始，加油！', 1500);
+            startCountdown();
+            updateUI();
+        }
+        function startBreak(long = false) {
+            clearInterval(state.timerInterval);
+            state.status = long ? 'longBreak' : 'break';
+            state.totalTime = (long ? state.longBreakMinutes : state.breakMinutes) * 60;
+            state.timeRemaining = state.totalTime;
+            state.soundManager.switchToBreak();
+            let breakMsg, voiceFile;
+            if (long) {
+                breakMsg = `☕ 长休息 ${state.longBreakMinutes} 分钟，好好放松！`;
+                voiceFile = '长休息时间，好好放松.mp3';
+            } else {
+                breakMsg = `🧘 休息 ${state.breakMinutes} 分钟，放松一下！`;
+                voiceFile = '休息几分钟，放松一下！.mp3';
+            }
+            playVoicePrompt(voiceFile);
+            showNotification(breakMsg, 2500);
+            startCountdown();
+            updateUI();
+        }
+        function startCountdown() {
+            clearInterval(state.timerInterval);
+            state.timerInterval = setInterval(() => {
+                state.timeRemaining--;
+                updateUI();
+                if (state.timeRemaining <= 0) {
+                    clearInterval(state.timerInterval);
+                    state.timerInterval = null;
+                    handleTimerComplete();
+                }
+            }, 1000);
+        }
+        function handleTimerComplete() {
+            playAlarm();
+            if (state.status === 'running') {
+                state.focusCount++;
+                state.totalMinutes += state.currentFocusMinutes || state.focusMinutes;
+                state.cycleFocusCount++;
+                if (state.cycleFocusCount >= state.sessionsBeforeLongBreak) {
+                    startBreak(true);
+                } else {
+                    startBreak(false);
+                }
+            } else if (state.status === 'break') {
+                state.breakCount++;
+                startFocus();
+            } else if (state.status === 'longBreak') {
+                state.breakCount++;
+                state.cycleFocusCount = 0;
+                startFocus();
+            } else {
+                state.status = 'idle';
+                updateUI();
+            }
+        }
+        function startTimer() {
+            if (state.status === 'running' || state.status === 'break' || state.status === 'longBreak') {
+                clearInterval(state.timerInterval);
+                state.timerInterval = null;
+                state.soundManager.stopAll();
+                state.previousStatus = state.status;
+                state.status = 'paused';
+                playVoicePrompt('已暂停.mp3');
+                showNotification('⏸ 已暂停', 1500);
+                updateUI();
+                return;
+            }
+            if (state.status === 'paused') {
+                if (state.timeRemaining <= 0) {
+                    if (state.previousStatus === 'break') {
+                        startBreak(false);
+                    } else if (state.previousStatus === 'longBreak') {
+                        startBreak(true);
+                    } else {
+                        startFocus();
+                    }
+                    return;
+                }
+                state.status = state.previousStatus;
+                if (state.status === 'running') {
+                    state.soundManager.switchToFocus();
+                } else if (state.status === 'break' || state.status === 'longBreak') {
+                    state.soundManager.switchToBreak();
+                }
+                playVoicePrompt('继续.mp3');
+                showNotification('▶ 继续', 1500);
+                startCountdown();
+                updateUI();
+                return;
+            }
+            loadConfig();
+            startFocus();
+        }
+        function skipTimer() {
+            if (state.status === 'running' || state.status === 'break' || state.status === 'longBreak') {
+                clearInterval(state.timerInterval);
+                state.timerInterval = null;
+                handleTimerComplete();
+            }
+        }
+        function resetFull() {
+            clearInterval(state.timerInterval);
+            state.timerInterval = null;
+            state.status = 'idle';
+            state.previousStatus = 'idle';
+            state.soundManager.stopAll();
+            loadConfig();
+            state.totalTime = state.focusMinutes * 60;
+            state.timeRemaining = state.totalTime;
+            state.currentFocusMinutes = state.focusMinutes;
+            state.focusCount = 0;
+            state.breakCount = 0;
+            state.totalMinutes = 0;
+            state.sessionCount = 0;
+            state.cycleFocusCount = 0;
+            updateUI();
+            playVoicePrompt('已重置.mp3');
+            showNotification('已重置', 1500);
+        }
+        let tasks = [];
+        function loadTasks() {
+            try {
+                const saved = localStorage.getItem('pomodoro_tasks');
+                if (saved) {
+                    tasks = JSON.parse(saved);
+                }
+            } catch (e) {
+                tasks = [];
+            }
+            renderTasks();
+        }
+        function saveTasks() {
+            try {
+                localStorage.setItem('pomodoro_tasks', JSON.stringify(tasks));
+            } catch (e) {}
+            renderTasks();
+        }
+        function renderTasks() {
+            const filtered = tasks.filter(t => !t.deleted);
+            const incomplete = filtered.filter(t => !t.completed);
+            const completed = filtered.filter(t => t.completed);
+            taskCount.textContent = `${incomplete.length} 项`;
+            if (filtered.length === 0) {
+                taskList.innerHTML = `<div class="empty-tasks">还没有任务，添加一个吧 🎯</div>`;
+                return;
+            }
+            let html = '';
+            [...incomplete, ...completed].forEach((task) => {
+                const realIndex = tasks.indexOf(task);
+                html += `
+                    <div class="task-item">
+                        <span class="task-text ${task.completed ? 'completed' : ''}"
+                              onclick="toggleTask(${realIndex})">${escapeHtml(task.text)}</span>
+                        <div class="task-actions">
+                            <button class="complete-btn" onclick="toggleTask(${realIndex})" title="${task.completed ? '撤销完成' : '标记完成'}">
+                                ${task.completed ? '↩️' : '✅'}
+                            </button>
+                            <button class="delete-btn" onclick="deleteTask(${realIndex})" title="删除">🗑️</button>
+                        </div>
+                    </div>
+                `;
+            });
+            taskList.innerHTML = html;
+        }
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        function addTask(text) {
+            text = text.trim();
+            if (!text) return;
+            tasks.push({ text, completed: false, deleted: false, createdAt: Date.now() });
+            saveTasks();
+            taskInput.value = '';
+            taskInput.focus();
+            playVoicePrompt('任务已添加.mp3');
+            showNotification('✅ 任务已添加', 1000);
+        }
+        window.toggleTask = function(index) {
+            if (index >= 0 && index < tasks.length) {
+                const task = tasks[index];
+                task.completed = !task.completed;
+                saveTasks();
+                if (task.completed) {
+                    playVoicePrompt('任务已完成，太棒了！.mp3');
+                    showNotification('🎉 任务已完成，太棒了！', 1500);
+                } else {
+                    showNotification('↩️ 已撤销完成', 1000);
+                }
+            }
+        };
+        window.deleteTask = function(index) {
+            if (index >= 0 && index < tasks.length) {
+                tasks[index].deleted = true;
+                saveTasks();
+                playVoicePrompt('任务已删除.mp3');
+                showNotification('🗑️ 任务已删除', 1000);
+            }
+        };
+        startBtn.addEventListener('click', startTimer);
+        resetBtn.addEventListener('click', resetFull);
+        skipBtn.addEventListener('click', skipTimer);
+        [focusMinutesInput, breakMinutesInput, longBreakMinutesInput, sessionsBeforeLongBreakInput].forEach(input => {
+            input.addEventListener('change', () => {
+                loadConfig();
+                if (state.status === 'idle') {
+                    state.totalTime = state.focusMinutes * 60;
+                    state.timeRemaining = state.totalTime;
+                    state.currentFocusMinutes = state.focusMinutes;
+                } else if (state.status === 'paused') {
+                    if (state.previousStatus === 'break') {
+                        state.totalTime = state.breakMinutes * 60;
+                    } else if (state.previousStatus === 'longBreak') {
+                        state.totalTime = state.longBreakMinutes * 60;
+                    } else {
+                        state.totalTime = state.focusMinutes * 60;
+                        state.currentFocusMinutes = state.focusMinutes;
+                    }
+                    if (state.timeRemaining > state.totalTime) {
+                        state.timeRemaining = state.totalTime;
+                    }
+                }
+                updateUI();
+            });
+            input.addEventListener('focus', () => input.select());
+        });
+        taskInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                addTask(taskInput.value);
+            }
+        });
+        addTaskBtn.addEventListener('click', () => addTask(taskInput.value));
+        document.addEventListener('keydown', (e) => {
+            if (e.target.tagName === 'INPUT') return;
+            if (e.key === ' ' || e.key === 'Space') {
+                e.preventDefault();
+                startTimer();
+            }
+            if (e.key === 'r' || e.key === 'R') {
+                resetFull();
+            }
+            if (e.key === 's' || e.key === 'S') {
+                skipTimer();
+            }
+        });
+        function init() {
+            loadConfig();
+            state.totalTime = state.focusMinutes * 60;
+            state.timeRemaining = state.totalTime;
+            state.currentFocusMinutes = state.focusMinutes;
+            state.status = 'idle';
+            state.previousStatus = 'idle';
+            state.cycleFocusCount = 0;
+            updateUI();
+            loadTasks();
+            volumeValue.textContent = volumeSlider.value + '%';
+            state.soundManager.setVolume(parseInt(volumeSlider.value));
+            console.log('🍅 番茄钟已启动！快捷键: 空格=开始/暂停, R=重置, S=跳过');
+            console.log('🎵 专注音效:', state.soundManager.focusSoundName, '休息音效:', state.soundManager.breakSoundName);
+        }
+        init();
+    </script>
+</body>
+</html>

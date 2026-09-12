@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <link rel="icon" type="image/png" href="assets/image/logo.png"/>
+    <title>放松模式 - 枫云AI助手Linux版</title>
+    <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{background:linear-gradient(145deg,#0f172a 0%,#1e293b 50%,#0f172a 100%);color:#eef2f5;font-family:'Segoe UI','Roboto','Helvetica Neue',sans-serif;min-height:100vh;padding:20px;display:flex;flex-direction:column}
+    .navbar{background:rgba(15,23,42,0.85);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);padding:0 24px;height:56px;display:flex;align-items:center;justify-content:space-between;border-radius:16px;margin-bottom:24px;border:1px solid rgba(255,255,255,0.06);flex-shrink:0}
+    .logo-area{display:flex;align-items:center;gap:10px;cursor:default}
+    .logo-area img{width:28px;height:28px;border-radius:6px}
+    .logo-area h1{font-size:18px;font-weight:500;margin:0}
+    .logo-area h1 span{color:#64b5f6}
+    .back-btn{background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.1);color:#b8d4e8;font-size:20px;cursor:pointer;padding:6px 14px;border-radius:30px;transition:all 0.2s ease;text-decoration:none;line-height:1}
+    .back-btn:hover{background:rgba(255,255,255,0.15);color:#fff;transform:scale(1.02)}
+    .container{flex:1;max-width:860px;margin:0 auto;width:100%;display:flex;flex-direction:column;gap:20px}
+    .sound-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;background:rgba(26,42,54,0.5);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border-radius:20px;padding:20px;border:1px solid rgba(255,255,255,0.05)}
+    .sound-card{background:rgba(15,23,42,0.6);border-radius:16px;overflow:hidden;cursor:pointer;transition:all 0.25s ease;border:2px solid transparent;position:relative;user-select:none}
+    .sound-card:hover{transform:translateY(-4px);box-shadow:0 8px 30px rgba(0,0,0,0.4)}
+    .sound-card.active{border-color:#64b5f6;box-shadow:0 0 20px rgba(100,181,246,0.25)}
+    .sound-card.active .sound-label{background:rgba(100,181,246,0.2);color:#64b5f6}
+    .sound-card .image-wrapper{position:relative;width:100%;padding-bottom:56.25%;overflow:hidden;background:#0f1a22}
+    .sound-card .image-wrapper img{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;display:block}
+    .sound-card .sound-label{padding:10px 8px;text-align:center;font-size:14px;font-weight:500;color:#b8d4e8;background:rgba(0,0,0,0.3);transition:all 0.25s ease;letter-spacing:0.5px}
+    .sound-card .play-indicator{position:absolute;top:8px;right:8px;width:28px;height:28px;border-radius:50%;background:rgba(100,181,246,0.85);display:none;align-items:center;justify-content:center;font-size:12px;color:#fff;backdrop-filter:blur(4px);box-shadow:0 2px 12px rgba(100,181,246,0.4);z-index:2}
+    .sound-card.active .play-indicator{display:flex;animation:pulse-ring 1.5s ease-in-out infinite}
+    .sound-card .volume-slider-wrap{position:absolute;bottom:50px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.75);backdrop-filter:blur(8px);padding:6px 12px;border-radius:20px;opacity:0;transition:opacity 0.3s ease,transform 0.3s ease;display:flex;align-items:center;gap:6px;border:1px solid rgba(255,255,255,0.08);z-index:5;pointer-events:none}
+    .sound-card.active .volume-slider-wrap{pointer-events:auto}
+    .sound-card.active:hover .volume-slider-wrap,.sound-card.active .volume-slider-wrap.visible{opacity:1;transform:translateX(-50%) translateY(0)}
+    .sound-card .volume-slider-wrap input[type="range"]{width:60px;height:3px;-webkit-appearance:none;background:rgba(255,255,255,0.2);border-radius:2px;outline:none}
+    .sound-card .volume-slider-wrap input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:12px;border-radius:50%;background:#64b5f6;cursor:pointer;box-shadow:0 2px 8px rgba(100,181,246,0.3)}
+    .sound-card .volume-slider-wrap input[type="range"]::-moz-range-thumb{width:12px;height:12px;border-radius:50%;background:#64b5f6;cursor:pointer;border:none}
+    .sound-card .volume-slider-wrap .vol-label{font-size:10px;color:#8aaec0;min-width:28px;text-align:center;font-variant-numeric:tabular-nums}
+    .sound-card .volume-slider-wrap .vol-icon{font-size:12px;color:#8aaec0}
+    @keyframes pulse-ring{0%,100%{box-shadow:0 0 0 0 rgba(100,181,246,0.4)}50%{box-shadow:0 0 0 8px rgba(100,181,246,0)}}
+    .controls-panel{background:rgba(26,42,54,0.5);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border-radius:20px;padding:20px 24px;border:1px solid rgba(255,255,255,0.05);display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:16px}
+    .controls-panel .now-playing{flex:1;min-width:120px;font-size:14px;color:#8aaec0}
+    .controls-panel .now-playing strong{color:#64b5f6;font-weight:500}
+    .controls-panel .btn-group{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+    .btn{padding:10px 22px;border:none;border-radius:30px;font-size:14px;font-weight:600;cursor:pointer;transition:all 0.2s ease;display:inline-flex;align-items:center;gap:6px;letter-spacing:0.3px}
+    .btn:active{transform:scale(0.96)}
+    .btn-primary{background:linear-gradient(135deg,#1e88e5,#1565c0);color:#fff;box-shadow:0 4px 16px rgba(30,136,229,0.3)}
+    .btn-primary:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(30,136,229,0.4)}
+    .btn-primary:disabled{opacity:0.5;cursor:not-allowed;transform:none !important}
+    .btn-stop{background:linear-gradient(135deg,#e53935,#c62828);color:#fff;box-shadow:0 4px 16px rgba(229,57,53,0.3)}
+    .btn-stop:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(229,57,53,0.4)}
+    .btn-stop:disabled{opacity:0.5;cursor:not-allowed;transform:none !important}
+    .timer-input-group{display:flex;align-items:center;gap:8px;background:rgba(0,0,0,0.3);padding:4px 12px 4px 16px;border-radius:30px;border:1px solid rgba(255,255,255,0.06)}
+    .timer-input-group label{font-size:13px;color:#8aaec0;white-space:nowrap}
+    .timer-input-group input{width:50px;padding:6px 4px;border-radius:8px;border:1px solid rgba(255,255,255,0.1);background:rgba(0,0,0,0.3);color:#eef2f5;font-size:14px;text-align:center;font-weight:600;outline:none;transition:border-color 0.2s}
+    .timer-input-group input:focus{border-color:#64b5f6}
+    .timer-input-group input::-webkit-inner-spin-button{-webkit-appearance:none}
+    .timer-input-group .unit{font-size:13px;color:#6c8ea0}
+    .timer-display{font-size:13px;color:#81c784;min-width:80px;text-align:center;font-variant-numeric:tabular-nums}
+    .timer-display.warning{color:#ffb74d}
+    .timer-display.danger{color:#ef5350}
+    .volume-control{display:flex;align-items:center;gap:8px;background:rgba(0,0,0,0.3);padding:4px 12px;border-radius:30px;border:1px solid rgba(255,255,255,0.06)}
+    .volume-control label{font-size:13px;color:#8aaec0}
+    .volume-control input[type="range"]{width:80px;height:4px;-webkit-appearance:none;background:rgba(255,255,255,0.15);border-radius:2px;outline:none;transition:background 0.2s}
+    .volume-control input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:#64b5f6;cursor:pointer;box-shadow:0 2px 8px rgba(100,181,246,0.3)}
+    .volume-control input[type="range"]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:#64b5f6;cursor:pointer;border:none}
+    .volume-control .volume-value{font-size:12px;color:#8aaec0;min-width:32px;text-align:center}
+    .sound-field-controls{display:flex;align-items:center;gap:12px;flex-wrap:wrap;justify-content:center}
+    .sound-field-select{display:flex;align-items:center;gap:8px;background:rgba(0,0,0,0.3);padding:4px 12px;border-radius:30px;border:1px solid rgba(255,255,255,0.06)}
+    .sound-field-select label{font-size:13px;color:#8aaec0}
+    .sound-field-select select{background:rgba(0,0,0,0.3);color:#eef2f5;border:1px solid rgba(255,255,255,0.1);border-radius:20px;padding:6px 10px;font-size:13px;outline:none;cursor:pointer}
+    .sound-field-select select option{background:#1e293b;color:#eef2f5}
+    .rotation-speed-control{display:flex;align-items:center;gap:8px;background:rgba(0,0,0,0.3);padding:4px 12px;border-radius:30px;border:1px solid rgba(255,255,255,0.06)}
+    .rotation-speed-control label{font-size:13px;color:#8aaec0}
+    .rotation-speed-control input[type="range"]{width:80px;height:4px;-webkit-appearance:none;background:rgba(255,255,255,0.15);border-radius:2px;outline:none}
+    .rotation-speed-control input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:#64b5f6;cursor:pointer;box-shadow:0 2px 8px rgba(100,181,246,0.3)}
+    .rotation-speed-control input[type="range"]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:#64b5f6;cursor:pointer;border:none}
+    .rotation-speed-control span{font-size:12px;color:#8aaec0;min-width:40px;text-align:center}
+    .sound-field-visual{display:flex;flex-direction:column;align-items:center;gap:4px;margin:0 8px}
+    .visual-circle{position:relative;width:90px;height:90px;border-radius:50%;background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.1);transition:transform 0.3s ease}
+    .visual-circle .person{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:28px;z-index:2}
+    .visual-circle .speaker{position:absolute;font-size:14px;opacity:0.4;transition:opacity 0.2s, transform 0.2s, color 0.2s;transform:translate(-50%,-50%)}
+    .visual-circle .speaker.active{opacity:1;color:#64b5f6;text-shadow:0 0 8px rgba(100,181,246,0.5);font-size:16px}
+    .speaker.front{top:0%;left:50%}
+    .speaker.front-right{top:15%;left:85%}
+    .speaker.right{top:50%;left:100%}
+    .speaker.back-right{top:85%;left:85%}
+    .speaker.back{top:100%;left:50%}
+    .speaker.back-left{top:85%;left:15%}
+    .speaker.left{top:50%;left:0%}
+    .speaker.front-left{top:15%;left:15%}
+    .speaker.dynamic{display:none; z-index:3; color:#64b5f6; opacity:1; font-size:18px; text-shadow:0 0 10px rgba(100,181,246,0.8); transition:left 0.05s linear, top 0.05s linear;}
+    .notification{position:fixed;top:24px;left:50%;transform:translateX(-50%);background:rgba(15,23,42,0.92);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);padding:14px 32px;border-radius:40px;border:1px solid rgba(255,255,255,0.08);box-shadow:0 12px 40px rgba(0,0,0,0.5);color:#eef2f5;font-size:15px;font-weight:500;display:none;z-index:1000;max-width:90%;text-align:center;animation:slideDown 0.4s ease}
+    .notification.show{display:block}
+    @keyframes slideDown{from{opacity:0;transform:translateX(-50%) translateY(-20px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+    .active-sounds-list{display:none;flex-wrap:wrap;gap:8px 16px;padding:8px 0;width:100%;border-top:1px solid rgba(255,255,255,0.05);margin-top:4px}
+    .active-sounds-list.visible{display:flex}
+    .active-sounds-list .sound-item{display:flex;align-items:center;gap:6px;background:rgba(15,23,42,0.5);padding:4px 10px 4px 14px;border-radius:20px;border:1px solid rgba(100,181,246,0.15);font-size:12px;color:#b8d4e8}
+    .active-sounds-list .sound-item .sname{font-weight:500;color:#eef2f5}
+    .active-sounds-list .sound-item input[type="range"]{width:50px;height:3px;-webkit-appearance:none;background:rgba(255,255,255,0.15);border-radius:2px;outline:none}
+    .active-sounds-list .sound-item input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:10px;height:10px;border-radius:50%;background:#64b5f6;cursor:pointer}
+    .active-sounds-list .sound-item input[type="range"]::-moz-range-thumb{width:10px;height:10px;border-radius:50%;background:#64b5f6;cursor:pointer;border:none}
+    .active-sounds-list .sound-item .vol-label{font-size:10px;color:#6c8ea0;min-width:24px;text-align:center}
+    @media (max-width:640px){body{padding:12px}.navbar{padding:0 16px;height:48px;border-radius:12px;margin-bottom:16px}.logo-area h1{font-size:15px}.sound-grid{gap:10px;padding:12px;border-radius:16px}.sound-card .sound-label{font-size:12px;padding:8px 4px}.controls-panel{padding:16px;flex-direction:column;align-items:stretch;gap:12px}.controls-panel .now-playing{text-align:center;font-size:13px}.controls-panel .btn-group{justify-content:center}.timer-input-group{justify-content:center}.volume-control{justify-content:center}.volume-control input[type="range"]{width:60px}.btn{padding:8px 16px;font-size:13px}.sound-card .volume-slider-wrap input[type="range"]{width:40px}.active-sounds-list .sound-item input[type="range"]{width:40px}.sound-field-controls{justify-content:center}.rotation-speed-control input[type="range"]{width:60px}.sound-field-visual{margin:8px 0}.visual-circle{width:70px;height:70px}.visual-circle .speaker{font-size:12px}.speaker.dynamic{font-size:14px}}
+    @media (max-width:480px){.sound-grid{gap:8px;padding:8px;grid-template-columns:repeat(3,1fr)}.sound-card .sound-label{font-size:10px;padding:6px 2px}.sound-card .play-indicator{width:20px;height:20px;font-size:9px;top:4px;right:4px}.controls-panel .btn-group{flex-wrap:wrap}.timer-input-group input{width:40px;font-size:12px}.timer-display{font-size:11px;min-width:60px}.volume-control input[type="range"]{width:50px}.btn{padding:6px 12px;font-size:12px}.controls-panel{padding:12px;gap:8px}.sound-card .volume-slider-wrap{padding:4px 8px;bottom:42px}.sound-card .volume-slider-wrap input[type="range"]{width:30px}.sound-card .volume-slider-wrap .vol-label{font-size:8px;min-width:20px}.sound-field-select select{font-size:12px;padding:4px 6px}.rotation-speed-control input[type="range"]{width:50px}.visual-circle{width:60px;height:60px}.visual-circle .speaker{font-size:10px}.visual-circle .person{font-size:20px}.speaker.dynamic{font-size:12px}}
+    @media (max-width:360px){.sound-grid{gap:4px;padding:4px}.sound-card .sound-label{font-size:9px;padding:4px 2px}.sound-card .image-wrapper{padding-bottom:56.25%}}
+    </style>
+</head>
+<body>
+    <div class="notification" id="notification"></div>
+    <nav class="navbar">
+        <div class="logo-area">
+            <img src="assets/image/logo.png" alt="Logo">
+            <h1>枫云AI助手 <span>放松模式</span></h1>
+        </div>
+        <button class="back-btn" onclick="window.close()" title="返回">↩️</button>
+    </nav>
+    <div class="container">
+        <div class="sound-grid" id="soundGrid"></div>
+        <div class="controls-panel">
+            <div class="now-playing">
+                🎧佩戴耳机体验更佳 <strong id="nowPlayingText"></strong>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-stop" id="stopBtn" disabled>⏹ 停止</button>
+            </div>
+            <div class="timer-input-group">
+                <label>⏱️ 停止</label>
+                <label for="stopMinutes"></label><input type="number" id="stopMinutes" value="30" min="1" max="999">
+                <span class="unit">分钟后</span>
+                <span class="timer-display" id="timerDisplay">--:--</span>
+            </div>
+            <div class="volume-control">
+                <label>🔊</label>
+                <label for="volumeSlider"></label><input type="range" id="volumeSlider" min="0" max="100" value="100">
+                <span class="volume-value" id="volumeValue">100%</span>
+            </div>
+            <div class="sound-field-controls">
+                <div class="sound-field-select">
+                    <label>🎧 空间音效</label>
+                    <label for="soundFieldMode"></label><select id="soundFieldMode">
+                        <option value="panorama" selected>全景声</option>
+                        <option value="surround">环绕声</option>
+                        <option value="front-left">左前</option>
+                        <option value="front-right">右前</option>
+                        <option value="right">右方</option>
+                        <option value="back-right">右后</option>
+                        <option value="back">后方</option>
+                        <option value="back-left">左后</option>
+                        <option value="left">左方</option>
+                    </select>
+                </div>
+                <div class="rotation-speed-control" id="rotationSpeedControl" style="display:none;">
+                    <label>🔄 速度</label>
+                    <label for="rotationSpeed"></label><input type="range" id="rotationSpeed" min="0.5" max="20" step="0.5" value="5">
+                    <span id="rotationSpeedValue">5°/s</span>
+                </div>
+                <div class="sound-field-visual" id="soundFieldVisual">
+                    <div class="visual-circle" id="visualCircle">
+                        <span class="person">👤</span>
+                        <span class="speaker front">🔊</span>
+                        <span class="speaker front-right">🔊</span>
+                        <span class="speaker right">🔊</span>
+                        <span class="speaker back-right">🔊</span>
+                        <span class="speaker back">🔊</span>
+                        <span class="speaker back-left">🔊</span>
+                        <span class="speaker left">🔊</span>
+                        <span class="speaker front-left">🔊</span>
+                        <span class="speaker dynamic" id="dynamicSpeaker">🔊</span>
+                    </div>
+                </div>
+            </div>
+            <div class="active-sounds-list" id="activeSoundsList"></div>
+        </div>
+    </div>
+    <script>
+    const SOUNDS = ['春风', '篝火', '海底', '海滩', '火车', '森林', '溪流', '夏夜', '雨天'];
+    const state = {
+        activeSounds: new Map(),
+        isPlaying: false,
+        timerInterval: null,
+        timeRemaining: 0,
+        totalTime: 0,
+        masterVolume: 1.0,
+        stopMinutes: 30,
+        soundFieldMode: 'panorama',
+        surroundAngle: 0,
+        surroundSpeed: 5,
+        surroundAnimationId: null,
+        audioContext: null
+    };
+    const grid = document.getElementById('soundGrid');
+    const nowPlayingText = document.getElementById('nowPlayingText');
+    const stopBtn = document.getElementById('stopBtn');
+    const stopMinutesInput = document.getElementById('stopMinutes');
+    const timerDisplay = document.getElementById('timerDisplay');
+    const volumeSlider = document.getElementById('volumeSlider');
+    const volumeValue = document.getElementById('volumeValue');
+    const notification = document.getElementById('notification');
+    const activeSoundsList = document.getElementById('activeSoundsList');
+    const soundFieldModeSelect = document.getElementById('soundFieldMode');
+    const rotationSpeedControl = document.getElementById('rotationSpeedControl');
+    const rotationSpeedSlider = document.getElementById('rotationSpeed');
+    const rotationSpeedValue = document.getElementById('rotationSpeedValue');
+    const visualCircle = document.getElementById('visualCircle');
+    const speakerElements = document.querySelectorAll('.speaker:not(.dynamic)');
+    const dynamicSpeaker = document.getElementById('dynamicSpeaker');
+    let notifTimeout = null;
+    const modeToSpeakerClass = {
+        'panorama': null,
+        'surround': null,
+        'front-left': 'front-left',
+        'front-right': 'front-right',
+        'right': 'right',
+        'back-right': 'back-right',
+        'back': 'back',
+        'back-left': 'back-left',
+        'left': 'left'
+    };
+    function showNotification(text, duration = 2500) {
+        notification.textContent = text;
+        notification.classList.add('show');
+        clearTimeout(notifTimeout);
+        notifTimeout = setTimeout(() => {
+            notification.classList.remove('show');
+        }, duration);
+    }
+    function formatTime(seconds) {
+        if (seconds < 0) seconds = 0;
+        const m = Math.floor(seconds / 60);
+        const s = Math.floor(seconds % 60);
+        return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+    }
+    function updateTimerDisplay() {
+        if (state.timeRemaining > 0) {
+            timerDisplay.textContent = formatTime(state.timeRemaining);
+            timerDisplay.className = 'timer-display';
+            if (state.timeRemaining < 60) {
+                timerDisplay.classList.add('danger');
+            } else if (state.timeRemaining < 300) {
+                timerDisplay.classList.add('warning');
+            }
+        } else {
+            timerDisplay.textContent = '--:--';
+            timerDisplay.className = 'timer-display';
+        }
+    }
+    function updateActiveSoundsList() {
+        const names = Array.from(state.activeSounds.keys());
+        if (names.length === 0) {
+            activeSoundsList.classList.remove('visible');
+            activeSoundsList.innerHTML = '';
+            return;
+        }
+        activeSoundsList.classList.add('visible');
+        activeSoundsList.innerHTML = names.map(name => {
+            const data = state.activeSounds.get(name);
+            const volPercent = Math.round(data.volume * 100);
+            return `<div class="sound-item" data-sound="${name}"><span class="sname">${name}</span><input type="range" min="0" max="100" value="${volPercent}" data-sound="${name}" class="individual-volume"><span class="vol-label">${volPercent}%</span></div>`;
+        }).join('');
+        activeSoundsList.querySelectorAll('.individual-volume').forEach(slider => {
+            slider.addEventListener('input', function() {
+                const name = this.dataset.sound;
+                const val = parseInt(this.value);
+                const vol = val / 100;
+                const data = state.activeSounds.get(name);
+                if (data) {
+                    data.volume = vol;
+                    try {
+                        data.audio.volume = vol * state.masterVolume;
+                    } catch (e) {}
+                    const parent = this.closest('.sound-item');
+                    if (parent) {
+                        const label = parent.querySelector('.vol-label');
+                        if (label) label.textContent = val + '%';
+                    }
+                    const cardSlider = document.querySelector(`.card-volume-slider[data-sound="${name}"]`);
+                    if (cardSlider) {
+                        cardSlider.value = val;
+                    }
+                    const cardLabel = document.querySelector(`.volume-slider-wrap[data-sound="${name}"] .vol-label`);
+                    if (cardLabel) cardLabel.textContent = val + '%';
+                }
+            });
+        });
+    }
+    function ensureAudioContext() {
+        if (!state.audioContext) {
+            state.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (state.audioContext.state === 'suspended') {
+            state.audioContext.resume();
+        }
+        return state.audioContext;
+    }
+    function getAngleFromMode(mode) {
+        const angles = {
+            'front-right': 45,
+            'right': 90,
+            'back-right': 135,
+            'back': 180,
+            'back-left': 225,
+            'left': 270,
+            'front-left': 315
+        };
+        return angles[mode] !== undefined ? angles[mode] : null;
+    }
+    function applyPannerPosition(panner, angleDeg) {
+        if (!panner) return;
+        const rad = angleDeg * Math.PI / 180;
+        const x = Math.sin(rad);
+        const z = -Math.cos(rad);
+        panner.positionX.value = x;
+        panner.positionZ.value = z;
+        panner.positionY.value = 0;
+    }
+    function setPannerMode(panner, mode, surroundAngle, offsetAngle) {
+        if (!panner) return;
+        if (mode === 'panorama') {
+            return;
+        } else if (mode === 'surround') {
+            const angle = surroundAngle + (offsetAngle || 0);
+            applyPannerPosition(panner, angle);
+        } else {
+            const angle = getAngleFromMode(mode);
+            if (angle !== null) {
+                applyPannerPosition(panner, angle);
+            }
+        }
+    }
+    function updateAllPannersForMode() {
+        for (const [name, data] of state.activeSounds) {
+            if (data.panner) {
+                setPannerMode(data.panner, state.soundFieldMode, state.surroundAngle, data.offsetAngle || 0);
+            }
+        }
+    }
+    function reconnectAudioGraph(data) {
+        const ctx = ensureAudioContext();
+        if (data.source) {
+            data.source.disconnect();
+        }
+        if (data.panner) {
+            data.panner.disconnect();
+        }
+        if (state.soundFieldMode === 'panorama') {
+            if (data.source) {
+                data.source.connect(ctx.destination);
+            }
+        } else {
+            if (!data.panner) {
+                data.panner = ctx.createPanner();
+                data.panner.panningModel = 'HRTF';
+                data.panner.distanceModel = 'linear';
+                data.panner.refDistance = 1;
+                data.panner.rolloffFactor = 1;
+            }
+            if (data.source) {
+                data.source.connect(data.panner);
+                data.panner.connect(ctx.destination);
+                setPannerMode(data.panner, state.soundFieldMode, state.surroundAngle, data.offsetAngle || 0);
+            }
+        }
+    }
+    function reconnectAllAudioGraphs() {
+        for (const [name, data] of state.activeSounds) {
+            reconnectAudioGraph(data);
+        }
+    }
+    function updateDynamicSpeakerPosition(angle) {
+        if (!dynamicSpeaker) return;
+        const rad = angle * Math.PI / 180;
+        const radiusPercent = 42;
+        const x = 50 + radiusPercent * Math.sin(rad);
+        const y = 50 - radiusPercent * Math.cos(rad);
+        dynamicSpeaker.style.left = x + '%';
+        dynamicSpeaker.style.top = y + '%';
+    }
+    function updateSoundFieldVisual() {
+        const mode = state.soundFieldMode;
+        speakerElements.forEach(el => el.classList.remove('active'));
+        dynamicSpeaker.style.display = 'none';
+        visualCircle.style.transform = 'rotate(0deg)';
+        if (mode === 'panorama') {
+            speakerElements.forEach(el => el.classList.add('active'));
+        } else if (mode === 'surround') {
+            dynamicSpeaker.style.display = 'block';
+            updateDynamicSpeakerPosition(state.surroundAngle);
+        } else {
+            const cls = modeToSpeakerClass[mode];
+            if (cls) {
+                const target = visualCircle.querySelector(`.speaker.${cls}`);
+                if (target) target.classList.add('active');
+            }
+        }
+    }
+    function startSurroundAnimation() {
+        stopSurroundAnimation();
+        let lastTime = performance.now();
+        function animate(now) {
+            const delta = (now - lastTime) / 1000;
+            lastTime = now;
+            state.surroundAngle = (state.surroundAngle + state.surroundSpeed * delta) % 360;
+            updateAllPannersForMode();
+            updateDynamicSpeakerPosition(state.surroundAngle);
+            state.surroundAnimationId = requestAnimationFrame(animate);
+        }
+        state.surroundAnimationId = requestAnimationFrame(animate);
+    }
+    function stopSurroundAnimation() {
+        if (state.surroundAnimationId) {
+            cancelAnimationFrame(state.surroundAnimationId);
+            state.surroundAnimationId = null;
+        }
+    }
+    function removeSound(name) {
+        const data = state.activeSounds.get(name);
+        if (data) {
+            try { data.audio.pause(); } catch(e) {}
+            if (data.source) { try { data.source.disconnect(); } catch(e) {} }
+            if (data.panner) { try { data.panner.disconnect(); } catch(e) {} }
+            state.activeSounds.delete(name);
+        }
+    }
+    function stopAllSounds() {
+        for (const name of Array.from(state.activeSounds.keys())) {
+            removeSound(name);
+        }
+        state.isPlaying = false;
+        updateUI();
+        updateActiveSoundsList();
+        if (state.timerInterval) {
+            clearInterval(state.timerInterval);
+            state.timerInterval = null;
+            state.timeRemaining = 0;
+            updateTimerDisplay();
+        }
+        stopSurroundAnimation();
+        showNotification('⏹ 已停止所有白噪音', 1500);
+    }
+    function updateNowPlayingText() {
+        const names = Array.from(state.activeSounds.keys());
+        if (names.length === 0) {
+            nowPlayingText.textContent = '';
+            return;
+        }
+        nowPlayingText.textContent = names.join(' + ');
+    }
+    function updateUI() {
+        const hasActive = state.activeSounds.size > 0;
+        stopBtn.disabled = !hasActive;
+        document.querySelectorAll('.sound-card').forEach(card => {
+            const name = card.dataset.sound;
+            if (state.activeSounds.has(name)) {
+                card.classList.add('active');
+            } else {
+                card.classList.remove('active');
+            }
+        });
+        updateNowPlayingText();
+        updateActiveSoundsList();
+    }
+    function startTimer(minutes) {
+        if (state.timerInterval) {
+            clearInterval(state.timerInterval);
+            state.timerInterval = null;
+        }
+        state.totalTime = minutes * 60;
+        state.timeRemaining = state.totalTime;
+        updateTimerDisplay();
+        if (state.totalTime <= 0) {
+            return;
+        }
+        state.timerInterval = setInterval(() => {
+            state.timeRemaining--;
+            updateTimerDisplay();
+            if (state.timeRemaining <= 0) {
+                clearInterval(state.timerInterval);
+                state.timerInterval = null;
+                showNotification('⏰ 定时结束，已停止播放', 3000);
+                stopAllSounds();
+            }
+        }, 1000);
+    }
+    function resetTimer() {
+        if (state.timerInterval) {
+            clearInterval(state.timerInterval);
+            state.timerInterval = null;
+        }
+        const minutes = parseInt(stopMinutesInput.value) || 30;
+        state.stopMinutes = Math.max(1, minutes);
+        if (state.activeSounds.size > 0) {
+            startTimer(state.stopMinutes);
+        } else {
+            state.timeRemaining = 0;
+            updateTimerDisplay();
+        }
+    }
+    function toggleSound(name) {
+        const card = document.querySelector(`.sound-card[data-sound="${name}"]`);
+        if (!card) return;
+        if (state.activeSounds.has(name)) {
+            removeSound(name);
+            card.classList.remove('active');
+            showNotification(`⏹ 已停止「${name}」`, 1000);
+        } else {
+            const audio = new Audio(`/relax_audio/${encodeURIComponent(name)}.mp3`);
+            audio.loop = true;
+            const initialVol = 1.0;
+            audio.volume = initialVol * state.masterVolume;
+            const ctx = ensureAudioContext();
+            const source = ctx.createMediaElementSource(audio);
+            let panner = null;
+            if (state.soundFieldMode === 'panorama') {
+                source.connect(ctx.destination);
+            } else {
+                panner = ctx.createPanner();
+                panner.panningModel = 'HRTF';
+                panner.distanceModel = 'linear';
+                panner.refDistance = 1;
+                panner.rolloffFactor = 1;
+                source.connect(panner);
+                panner.connect(ctx.destination);
+                const offsetAngle = state.activeSounds.size * 120 % 360;
+                setPannerMode(panner, state.soundFieldMode, state.surroundAngle, offsetAngle);
+            }
+            audio.play().catch(err => {
+                console.error(`播放 "${name}" 失败:`, err);
+                showNotification(`⚠️ 无法播放「${name}」，请检查音频文件`, 2000);
+                try { source.disconnect(); } catch(e) {}
+                if (panner) { try { panner.disconnect(); } catch(e) {} }
+                return;
+            });
+            const offsetAngle = state.activeSounds.size * 120 % 360;
+            state.activeSounds.set(name, { audio, volume: initialVol, panner, source, offsetAngle });
+            card.classList.add('active');
+            showNotification(`▶️ 已播放「${name}」`, 1000);
+        }
+        state.isPlaying = state.activeSounds.size > 0;
+        updateUI();
+        if (state.activeSounds.size > 0) {
+            if (!state.timerInterval) {
+                const minutes = parseInt(stopMinutesInput.value) || 30;
+                state.stopMinutes = Math.max(1, minutes);
+                startTimer(state.stopMinutes);
+            }
+            if (state.soundFieldMode === 'surround') {
+                startSurroundAnimation();
+            }
+        } else {
+            if (state.timerInterval) {
+                clearInterval(state.timerInterval);
+                state.timerInterval = null;
+                state.timeRemaining = 0;
+                updateTimerDisplay();
+            }
+            stopSurroundAnimation();
+        }
+        updateActiveSoundsList();
+    }
+    function renderGrid() {
+        grid.innerHTML = SOUNDS.map(name => `<div class="sound-card" data-sound="${name}"><div class="image-wrapper"><img src="/relax_image/${encodeURIComponent(name)}.jpg" alt="${name}" onerror="this.style.display='none'"></div><div class="sound-label">${name}</div><div class="play-indicator">▶</div><div class="volume-slider-wrap" data-sound="${name}"><span class="vol-icon">🔊</span><input type="range" min="0" max="100" value="100" data-sound="${name}" class="card-volume-slider"><span class="vol-label">100%</span></div></div>`).join('');
+        grid.querySelectorAll('.sound-card').forEach(card => {
+            card.addEventListener('click', (e) => {
+                if (e.target.closest('.volume-slider-wrap')) return;
+                const name = card.dataset.sound;
+                toggleSound(name);
+            });
+            const volSlider = card.querySelector('.card-volume-slider');
+            const volLabel = card.querySelector('.vol-label');
+            const wrap = card.querySelector('.volume-slider-wrap');
+            volSlider.addEventListener('input', function(e) {
+                e.stopPropagation();
+                const name = this.dataset.sound;
+                const val = parseInt(this.value);
+                const vol = val / 100;
+                const data = state.activeSounds.get(name);
+                if (data) {
+                    data.volume = vol;
+                    try {
+                        data.audio.volume = vol * state.masterVolume;
+                    } catch (err) {}
+                    if (volLabel) volLabel.textContent = val + '%';
+                }
+                const listItem = activeSoundsList.querySelector(`.sound-item[data-sound="${name}"]`);
+                if (listItem) {
+                    const listSlider = listItem.querySelector('.individual-volume');
+                    const listLabel = listItem.querySelector('.vol-label');
+                    if (listSlider) listSlider.value = val;
+                    if (listLabel) listLabel.textContent = val + '%';
+                }
+            });
+            card.addEventListener('mouseenter', () => {
+                if (state.activeSounds.has(card.dataset.sound)) {
+                    wrap.classList.add('visible');
+                }
+            });
+            card.addEventListener('mouseleave', () => {
+                wrap.classList.remove('visible');
+            });
+        });
+    }
+    volumeSlider.addEventListener('input', function() {
+        const val = parseInt(this.value);
+        volumeValue.textContent = val + '%';
+        state.masterVolume = val / 100;
+        for (const [name, data] of state.activeSounds) {
+            try {
+                data.audio.volume = data.volume * state.masterVolume;
+            } catch (e) {}
+        }
+    });
+    stopBtn.addEventListener('click', stopAllSounds);
+    stopMinutesInput.addEventListener('change', function() {
+        let val = parseInt(this.value) || 30;
+        if (val < 1) val = 1;
+        this.value = val;
+        state.stopMinutes = val;
+        if (state.activeSounds.size > 0) {
+            resetTimer();
+            showNotification(`⏱️ 已更新定时为 ${val} 分钟`, 1200);
+        }
+    });
+    stopMinutesInput.addEventListener('focus', function() {
+        this.select();
+    });
+    soundFieldModeSelect.addEventListener('change', function() {
+        state.soundFieldMode = this.value;
+        if (state.soundFieldMode === 'surround') {
+            rotationSpeedControl.style.display = 'flex';
+            if (state.activeSounds.size > 0) {
+                startSurroundAnimation();
+            }
+        } else {
+            rotationSpeedControl.style.display = 'none';
+            stopSurroundAnimation();
+            visualCircle.style.transform = 'rotate(0deg)';
+        }
+        reconnectAllAudioGraphs();
+        updateAllPannersForMode();
+        updateSoundFieldVisual();
+        const selectedText = this.options[this.selectedIndex].text;
+        showNotification(`🎧 空间音效模式已切换为「${selectedText}」`, 1500);
+    });
+    rotationSpeedSlider.addEventListener('input', function() {
+        state.surroundSpeed = parseFloat(this.value);
+        rotationSpeedValue.textContent = state.surroundSpeed + '°/s';
+    });
+    document.addEventListener('keydown', function(e) {
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
+        if (e.key === ' ' || e.key === 'Space') {
+            e.preventDefault();
+            if (state.activeSounds.size > 0) {
+                stopAllSounds();
+            }
+        }
+    });
+    renderGrid();
+    updateSoundFieldVisual();
+    console.log('🎵 放松模式已加载，支持白噪音:', SOUNDS.join(', '));
+    console.log('🎧 空间音效模式已启用，全景声使用音频');
+    window.addEventListener('beforeunload', function() {
+        for (const [name, data] of state.activeSounds) {
+            try {
+                data.audio.pause();
+            } catch (e) {}
+        }
+        if (state.timerInterval) {
+            clearInterval(state.timerInterval);
+        }
+        stopSurroundAnimation();
+        if (state.audioContext) {
+            state.audioContext.close();
+        }
+    });
+    </script>
+</body>
+</html>
