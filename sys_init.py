@@ -3,8 +3,7 @@ import socket
 
 CONFIG_FILE = 'data/db/config.json'
 DEFAULT_CONFIG_FILE = 'data/db/config_default.json'
-#model_root_path = "data/model"
-model_root_path = "E:/model"
+model_root_path = "data/model"
 
 
 def load_config():
